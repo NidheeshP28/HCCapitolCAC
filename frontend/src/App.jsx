@@ -1,9 +1,9 @@
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, CircleMarker, Circle, Marker, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "./styles.css";
-import { TARGETS, KLIVE, buildDistances, evaluatePlan, getCurve, minCenters, minReach } from "./lib/plan.js";
+import { buildDistances, evaluatePlan, getCurve } from "./lib/plan.js";
 
 const KMIN = 3;
 const KMAX = 25;          // budget slider; plans for more than KPRE centers are computed live in the browser
@@ -12,14 +12,7 @@ const RMIN = 0.25, RMAX = 60;          // reach slider, in miles, on a log scale
 const rToT = (r) => Math.max(0, Math.min(100, (100 * Math.log(r / RMIN)) / Math.log(RMAX / RMIN)));
 const tToR = (t) => RMIN * Math.pow(RMAX / RMIN, t / 100);
 const niceR = (r) => (r < 2 ? Math.round(r * 20) / 20 : r < 10 ? Math.round(r * 10) / 10 : Math.round(r * 2) / 2);
-const upR = (r) => (r < 2 ? Math.ceil(r * 20) / 20 : r < 10 ? Math.ceil(r * 10) / 10 : Math.ceil(r * 2) / 2);
 const MILE_M = 1609.34;
-const TYPE_LABEL = {
-  fire_station: "Fire station",
-  library: "Library",
-  community_centre: "Community center",
-  school: "School",
-};
 const COLORS = { covered: "#25745d", uncovered: "#b84b43", center: "#274a63" };
 
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
@@ -34,9 +27,9 @@ function FitBounds({ bounds }) {
   return null;
 }
 
-function BrandMark() {
+function BrandMark({ className = "" }) {
   return (
-    <span className="brand-mark" aria-hidden="true">
+    <span className={`brand-mark ${className}`.trim()} aria-hidden="true">
       <span className="brand-cell brand-cell-bolt">
         <svg viewBox="0 0 12 16" focusable="false"><path d="M7.3 0 1.8 8h3.6L4.7 16l5.5-8H6.6L7.3 0Z" /></svg>
       </span>
@@ -63,7 +56,6 @@ function SectionEyebrow({ children }) {
 
 function PlannerDashboard({ data, error, fips, setFips, k, setK, radius, setRadius, mode, setMode }) {
   const [showAll, setShowAll] = useState(false);
-  const [target, setTarget] = useState(90);
 
   const county = data && fips ? data.counties[fips] : null;
 
@@ -79,18 +71,9 @@ function PlannerDashboard({ data, error, fips, setFips, k, setK, radius, setRadi
   const D = useMemo(() => (county ? buildDistances(county) : null), [county]);
   const livePlan = useMemo(() => {
     if (!live || !D) return null;
-    const curve = getCurve(county, D, R);
-    const sel = curve.sel.slice(0, k);
-    return { sel, gains: curve.gains.slice(0, k), ...evaluatePlan(county, D, sel, R, Number(fips) || 0) };
+    const sel = getCurve(county, D, R).sel.slice(0, k);
+    return { sel, ...evaluatePlan(county, D, sel, R, Number(fips) || 0) };
   }, [live, D, county, R, k, fips]);
-
-  // the trade-off panel is computed from deferred values so dragging a slider stays smooth
-  const dR = useDeferredValue(R), dk = useDeferredValue(k);
-  const panel = useMemo(() => {
-    if (!county || !D) return null;
-    const curve = getCurve(county, D, dR);
-    return { R: dR, k: dk, need: TARGETS.map((t) => ({ t, n: minCenters(curve, t) })), reach: minReach(county, D, dk, target) };
-  }, [county, D, dR, dk, target]);
 
   if (error) return <Message title="Can't load the data" body={error} />;
   if (!data) return <Message title="Loading…" />;
@@ -102,14 +85,12 @@ function PlannerDashboard({ data, error, fips, setFips, k, setK, radius, setRadi
   const robust = mode === "robust" && hasRobust;
   let v;
   if (pre && robust)
-    v = { sel: pre.rsel, gains: pre.rgains, unc: pre.runc, cov: pre.rcov, red: pre.rred, exp: pre.rexp, lo: pre.rlo, hi: pre.rhi };
+    v = { sel: pre.rsel, unc: pre.runc, cov: pre.rcov, exp: pre.rexp, lo: pre.rlo, hi: pre.rhi };
   else if (pre)
-    v = { sel: pre.sel, gains: county.gains, unc: pre.unc, cov: pre.cov, red: pre.red, exp: pre.exp, lo: pre.lo, hi: pre.hi };
+    v = { sel: pre.sel, unc: pre.unc, cov: pre.cov, exp: pre.exp, lo: pre.lo, hi: pre.hi };
   else v = livePlan;
-  const opt = pre ? pre.opt : null, ratio = pre ? pre.ratio : null;
-  const { sel, gains: gainsArr, unc: uncList, cov, red, exp, lo, hi } = v;
-  const gap = opt != null ? opt - cov : null;
-  const chosen = sel.map((si, i) => ({ ...county.sites[si], n: i + 1, gain: gainsArr[i] }));
+  const { sel, unc: uncList, cov, exp, lo, hi } = v;
+  const chosen = sel.map((si, i) => ({ ...county.sites[si], n: i + 1 }));
   const uncovered = new Set(uncList);
   const maxW = Math.max(...county.zips.map((z) => z.w), 1);
   const worst = uncList
@@ -196,111 +177,11 @@ function PlannerDashboard({ data, error, fips, setFips, k, setK, radius, setRadi
             <i style={{ width: `${cov}%` }} />
           </div>
           <p>
-            of people on power-dependent medical equipment live within <b>{R} mi</b> of a planned center, on paper.
+            of estimated need within <b>{R} mi</b>, on paper.
           </p>
           <p className="sub">
-            <b>Expected {exp.toFixed(0)}%</b> if ZIP centers are a little off. If the real reach is 20% smaller or larger:{" "}
-            <b>{lo.toFixed(0)}–{hi.toFixed(0)}%</b>.
+            Expected <b>{exp.toFixed(0)}%</b> · range <b>{lo.toFixed(0)}–{hi.toFixed(0)}%</b>
           </p>
-          <p className="sub">
-            {gap == null
-              ? live
-                ? "Greedy placement, computed live for this reach and budget."
-                : "Placement chosen by a greedy algorithm."
-              : gap < 0.05
-              ? "Matches the best possible on paper."
-              : robust
-              ? `Gives up ${gap.toFixed(1)} points on paper (best possible: ${opt.toFixed(1)}%) to hold up better when the data is a little off.`
-              : `Reaches ${ratio.toFixed(1)}% of the best possible on paper (${opt.toFixed(1)}%).`}
-            {robust && sel.length < k ? ` Full coverage needs only ${sel.length}; more would add nothing.` : ""}
-          </p>
-          <p className="sub">
-            {red < 0.5
-              ? "Almost nobody is within reach of two centers, so losing one center leaves its area uncovered."
-              : `${red.toFixed(0)}% are within reach of two or more centers, so they stay covered if one is knocked out.`}
-          </p>
-          {countyHasRobust && hasRobust && (
-            <p className="sub">
-              {robust
-                ? "Chosen to hold up if the data is a little off. Re-solved for each N, so centers can move as you drag the slider."
-                : "Centers are added one at a time; earlier ones stay put."}
-            </p>
-          )}
-        </section>
-
-        <section className="trade">
-          <h2>Reach vs. budget</h2>
-          <p className="note">
-            More centers or a longer reach both raise coverage. They trade off against each other, so fix one and solve for the other.
-          </p>
-          <fieldset className="seg targets">
-            <legend>Coverage target</legend>
-            {TARGETS.map((t) => (
-              <label key={t} className={target === t ? "on" : ""}>
-                <input type="radio" name="target" checked={target === t} onChange={() => setTarget(t)} />
-                {t}%
-              </label>
-            ))}
-          </fieldset>
-          {panel && (
-            <>
-              <p>
-                At <b>{panel.R} mi</b>, reaching <b>{target}%</b> takes{" "}
-                {(() => {
-                  const n = panel.need.find((x) => x.t === target).n;
-                  return n === null ? (
-                    <b>more than {KLIVE} centers</b>
-                  ) : (
-                    <button type="button" className="linkbtn" disabled={n > KMAX} onClick={() => setK(Math.max(KMIN, n))}>
-                      {n} center{n === 1 ? "" : "s"}
-                    </button>
-                  );
-                })()}
-                .
-              </p>
-              <p>
-                With <b>{panel.k} centers</b>, reaching <b>{target}%</b> takes a reach of{" "}
-                {panel.reach === null ? (
-                  <b>more than 150 mi</b>
-                ) : (
-                  <button type="button" className="linkbtn" onClick={() => setRadius(upR(panel.reach))}>
-                    {upR(panel.reach)} mi
-                  </button>
-                )}
-                .
-              </p>
-              <p className="note">
-                Centers needed at {panel.R} mi:{" "}
-                {panel.need.map((x, i) => (
-                  <span key={x.t}>
-                    {i > 0 && " · "}
-                    {x.t}% needs {x.n === null ? `>${KLIVE}` : x.n}
-                  </span>
-                ))}
-              </p>
-              <p className="note">
-                Greedy estimates. Reach is the distance people can realistically travel in an outage. Loosening it raises coverage on paper
-                without helping anyone, so treat it as a standard to meet, not a dial to hit a number.
-              </p>
-            </>
-          )}
-        </section>
-
-        <section>
-          <h2>Planned centers</h2>
-          <ol className="centers">
-            {chosen.map((c) => (
-              <li key={c.n}>
-                <span className="num">{c.n}</span>
-                <span className="who">
-                  <b>{c.name}</b>
-                  <em>{TYPE_LABEL[c.type] || "Facility"}</em>
-                </span>
-                <span className="gain">{c.gain > 0 ? `+${fmt(c.gain)}` : "0"}</span>
-              </li>
-            ))}
-          </ol>
-          <p className="note">“+” is how many people each center newly brings within reach, in the order it is added.</p>
         </section>
 
         {worst.length > 0 && (
@@ -451,25 +332,13 @@ export default function App() {
 
   return (
     <div className="site-shell" id="top">
-      <header className="site-header">
-        <a className="brand" href="#top">
-          <BrandMark />
-          <BrandWord />
-          <span className="brand-divider" />
-          <span className="brand-context">County planning</span>
-        </a>
-        <nav className="site-nav" aria-label="Main navigation">
-          <a href="#how-it-works">How it works</a>
-          <a href="#who-its-for">Who it's for</a>
-          <a href="#method">Data &amp; limits</a>
-          <a className="nav-cta" href="#planner">Open planner <span aria-hidden="true">↘</span></a>
-        </nav>
-      </header>
-
       <main className="main-content">
         <section className="page-heading hero-section motion-reveal" aria-label="GridAid">
-          <h1 className="hero-wordmark"><BrandWord className="hero-wordmark-type" /></h1>
-          <p className="hero-slogan">Plan power. Protect care.</p>
+          <div className="hero-identity">
+            <BrandMark className="hero-brand-mark" />
+            <h1 className="hero-wordmark"><BrandWord className="hero-wordmark-type" /></h1>
+          </div>
+          <p className="hero-slogan">Backup power, placed where it is needed the most.</p>
         </section>
 
         <section id="planner" className="product-section motion-reveal">

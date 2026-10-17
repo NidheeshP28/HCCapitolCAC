@@ -394,6 +394,32 @@ function Message({ title, body }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    const sections = document.querySelectorAll(".motion-reveal");
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
+      sections.forEach((section) => section.classList.add("is-visible"));
+      return;
+    }
+
+    document.documentElement.classList.add("motion-ready");
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { rootMargin: "0px 0px -36px 0px", threshold: 0.08 },
+    );
+    sections.forEach((section) => observer.observe(section));
+    return () => {
+      observer.disconnect();
+      document.documentElement.classList.remove("motion-ready");
+    };
+  }, []);
+
   return (
     <div className="site-shell" id="top">
       <header className="site-header">
@@ -403,57 +429,139 @@ export default function App() {
           <span className="brand-divider" />
           <span className="brand-context">County planning</span>
         </a>
-        <a className="header-link" href="#method">About the estimates <span aria-hidden="true">↗</span></a>
+        <nav className="site-nav" aria-label="Main navigation">
+          <a href="#how-it-works">How it works</a>
+          <a href="#who-its-for">Who it's for</a>
+          <a href="#method">Data &amp; limits</a>
+          <a className="nav-cta" href="#planner">Open planner <span aria-hidden="true">↘</span></a>
+        </nav>
       </header>
 
       <main className="main-content">
-        <section className="page-heading">
+        <section className="page-heading motion-reveal">
           <div>
-            <p className="eyebrow">GRID AID <span>/</span> COUNTY PLANNING</p>
-            <h1>Plan for backup-power access.</h1>
-            <p>Compare candidate centers against ZIP-level estimates for people who rely on electricity-dependent medical equipment.</p>
+            <p className="eyebrow">COMMUNITY RESILIENCE <span>/</span> COUNTY PLANNING</p>
+            <h1>When the power goes out, who can reach help?</h1>
+            <p>Explore where backup-power centers could reach people who rely on electricity-dependent medical equipment—and where the gaps remain.</p>
+            <div className="hero-actions">
+              <a className="button-primary" href="#planner">Explore county plans <span aria-hidden="true">↘</span></a>
+              <a className="button-text" href="#how-it-works">How the estimates work</a>
+            </div>
           </div>
-          <p className="planning-note"><span className="note-mark" aria-hidden="true">i</span> Estimates support planning; they do not guarantee access or safety.</p>
+          <aside className="planning-note">
+            <span className="note-mark" aria-hidden="true">i</span>
+            <div>
+              <span className="note-label">A planning aid, not a promise</span>
+              <p>Coverage is estimated from public data. It is not a guarantee of access, available power, or safety.</p>
+            </div>
+          </aside>
         </section>
 
-        <section id="planner" className="planner-section">
+        <section className="approach-band motion-reveal" aria-label="What the planner brings together">
+          <div>
+            <span className="approach-index">01</span>
+            <p><b>Health estimates</b><small>Aggregate, ZIP-level emPOWER counts</small></p>
+          </div>
+          <div>
+            <span className="approach-index">02</span>
+            <p><b>Candidate locations</b><small>Publicly mapped community facilities</small></p>
+          </div>
+          <div>
+            <span className="approach-index">03</span>
+            <p><b>Visible trade-offs</b><small>Compare reach, budget, and coverage</small></p>
+          </div>
+        </section>
+
+        <section className="planner-intro motion-reveal">
+          <div>
+            <p className="eyebrow">A PRACTICAL STARTING POINT</p>
+            <h2>Make the trade-offs visible.</h2>
+            <p>Choose a county, adjust the number of candidate centers and estimated reach, then see which ZIP areas may remain underserved.</p>
+          </div>
+          <a className="planner-jump" href="#planner">
+            <span><b>Open the county planner</b><small>Compare locations on the map</small></span>
+            <span className="jump-arrow" aria-hidden="true">↘</span>
+          </a>
+        </section>
+
+        <section id="planner" className="planner-section motion-reveal">
           <div className="planner-section-heading">
             <div>
-              <h2>Coverage map</h2>
-              <p>ZIP-level estimates and candidate center reach.</p>
+              <p className="eyebrow">INTERACTIVE PLANNING TOOL</p>
+              <h2>Explore a county plan</h2>
             </div>
-            <p className="map-instruction">Select a ZIP or center on the map for details.</p>
+            <p>Change the county, center budget, or estimated reach to compare possible plans.</p>
           </div>
           <PlannerDashboard />
         </section>
 
-        <section className="method-section" id="method">
+        <section className="content-section motion-reveal" id="how-it-works">
+          <div className="section-heading">
+            <p className="eyebrow">HOW IT WORKS</p>
+            <h2>From public data to a clearer plan.</h2>
+            <p>GridAid is designed to help local teams ask better questions before an outage—not to make decisions for them.</p>
+          </div>
+          <ol className="steps-list">
+            <li>
+              <span>01</span>
+              <div><h3>Start with a county</h3><p>See ZIP-level estimates for Medicare beneficiaries who rely on electricity-dependent medical equipment.</p></div>
+            </li>
+            <li>
+              <span>02</span>
+              <div><h3>Set planning assumptions</h3><p>Choose how many candidate sites to consider and how far people might travel to reach one.</p></div>
+            </li>
+            <li>
+              <span>03</span>
+              <div><h3>Review coverage and gaps</h3><p>Compare potential locations, estimated coverage, and ZIP areas that may need other forms of support.</p></div>
+            </li>
+          </ol>
+        </section>
+
+        <section className="audience-section motion-reveal" id="who-its-for">
+          <div className="section-heading">
+            <p className="eyebrow">WHO IT'S FOR</p>
+            <h2>A shared picture for local planning.</h2>
+          </div>
+          <div className="audience-list">
+            <article><span>Emergency management</span><p>Use coverage estimates to start conversations about resource placement before an outage.</p></article>
+            <article><span>County planners</span><p>Compare how limited center budgets and different reach assumptions change the plan.</p></article>
+            <article><span>Community partners</span><p>Bring local knowledge to candidate locations and check access, capacity, staffing, and needs.</p></article>
+          </div>
+        </section>
+
+        <section className="method-section motion-reveal" id="method">
           <div className="method-heading">
             <div>
               <p className="eyebrow">DATA &amp; METHOD</p>
-              <h2>Read the estimates in context.</h2>
+              <h2>Useful estimates need local context.</h2>
             </div>
-            <p>Use the plan to compare options, then validate candidate sites with local partners.</p>
+            <p>Use the plan to compare options, then validate candidate sites and assumptions with local partners.</p>
           </div>
-          <details className="assume method-details">
-            <summary>Data sources, assumptions, and limitations</summary>
-            <ul>
-              <li>HHS emPOWER counts represent Medicare beneficiaries who use electricity-dependent medical equipment. Younger people and non-Medicare users are not included.</li>
-              <li>Reach is straight-line distance from ZIP centers, not travel time. Roads, flooding, and mobility needs can make real access harder.</li>
-              <li>Expected coverage assumes each ZIP’s population center may be displaced by roughly a third of the distance to a neighboring ZIP center. This is an assumption, not a measurement; large rural ZIPs may be less precise.</li>
-              <li>Changing the reach or using more than {KPRE} centers recomputes the greedy plan in your browser. The robust plan and best-possible comparison are precomputed only at the county’s default reach.</li>
-              <li>Counts from 1 to 10 are published as 11, so small ZIPs may be slightly overstated.</li>
-              <li>Candidate sites come from OpenStreetMap and are not verified for backup power, accessibility, staffing, capacity, or availability.</li>
-              <li>Plans are estimates for community planning—not a safety guarantee.</li>
-            </ul>
-          </details>
+          <div className="method-grid">
+            <article>
+              <h3>What goes into a plan</h3>
+              <p>
+                <a href="https://empowermap.hhs.gov/" target="_blank" rel="noreferrer">HHS emPOWER</a> estimates describe Medicare beneficiaries using electricity-dependent medical equipment. Candidate facilities are drawn from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> and public facility data.
+              </p>
+              <p>The planner uses ZIP representative points and straight-line distance to estimate reach; it does not calculate road travel time.</p>
+            </article>
+            <article>
+              <h3>What to check locally</h3>
+              <p>Population estimates do not include everyone who may need powered medical equipment. Small source counts are suppressed, and ZIP-level locations are approximate.</p>
+              <p>Candidate sites are not verified for generator capacity, accessibility, staffing, or availability. Real access may be affected by roads, flooding, and mobility needs.</p>
+            </article>
+            <article className="privacy-note">
+              <h3>Privacy by design</h3>
+              <p>GridAid uses aggregate estimates for planning; it does not identify or locate individuals.</p>
+            </article>
+          </div>
         </section>
       </main>
 
       <footer className="site-footer">
         <div>
           <span>GridAid</span>
-          <span>County-level backup-power planning</span>
+          <span>County-level backup-power planning · Aggregate data, community context</span>
           <a href="#top">Back to top ↑</a>
         </div>
       </footer>

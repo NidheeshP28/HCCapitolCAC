@@ -1035,14 +1035,14 @@ html, body { background: var(--canvas); color: var(--ink); }
   position: absolute;
   top: calc(var(--planner-gap) / 2);
   left: 0;
-  width: calc(100% - 36px);
-  margin: 0 18px;
+  width: calc(50% - 28px);
+  margin: 0;
   color: #c0c3b9;
   font-size: clamp(20px, 2.2vw, 28px);
   font-weight: 400;
   letter-spacing: .015em;
   line-height: 1.35;
-  text-align: center;
+  text-align: right;
   transform: translateY(-50%);
 }
 .product-section {
@@ -1058,6 +1058,12 @@ html, body { background: var(--canvas); color: var(--ink); }
   }
   .page-heading h1.hero-wordmark { font-size: clamp(84px, 24vw, 150px); }
   .hero-slogan { font-size: clamp(17px, 4.6vw, 20px); }
+  .product-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+  .product-heading > div { max-width: calc(50% - 28px); }
   .product-section {
     --planner-gap: clamp(300px, 44vh, 380px);
     padding-top: var(--planner-gap);
@@ -1089,6 +1095,55 @@ html, body { background: var(--canvas); color: var(--ink); }
 }
 .method-grid article + article {
   padding-left: 0;
+}
+
+.content-section,
+.audience-section {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: clamp(72px, 8vw, 112px);
+}
+.method-heading,
+.method-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: clamp(72px, 8vw, 112px);
+}
+.method-heading {
+  align-items: end;
+}
+.method-heading > p {
+  margin: 0;
+}
+.method-grid article,
+.method-grid article + article {
+  min-width: 0;
+  padding-inline: 0;
+}
+
+@media (max-width: 680px) {
+  .content-section,
+  .audience-section {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 40px;
+  }
+  .content-section .section-heading h2,
+  .audience-section .section-heading h2,
+  .method-heading h2 {
+    font-size: clamp(23px, 7vw, 30px);
+  }
+  .steps-list li {
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 6px;
+  }
+  .audience-list article {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .method-heading,
+  .method-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 40px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

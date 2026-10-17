@@ -355,6 +355,7 @@ export default function App() {
             right: rect.right - shellRect.left,
             bottom: rect.bottom - shellRect.top,
             centerY: rect.top - shellRect.top + rect.height / 2,
+            width: rect.width,
             height: rect.height,
           };
         };
@@ -372,7 +373,9 @@ export default function App() {
           const layoutTop = containerRect.top - translateY - (container.offsetHeight * (1 - scaleY)) / 2;
           const left = layoutLeft + (rect.left - containerRect.left) / scaleX;
           const top = layoutTop + (rect.top - containerRect.top) / scaleY;
-          return { left, top, centerY: top + rect.height / scaleY / 2 };
+          const width = rect.width / scaleX;
+          const height = rect.height / scaleY;
+          return { left, top, right: left + width, centerY: top + height / 2 };
         };
         const wordmarkRect = relativeRect(wordmark);
         const headingRect = layoutRectIn(plannerHeading, planner);
@@ -385,8 +388,17 @@ export default function App() {
           : 1;
 
         setSloganTop((sloganCenter - plannerRect.top) / plannerScale);
+        const branchTo = (element, id, container) => {
+          const rect = layoutRectIn(element, container);
+          const gap = 8;
+          return {
+            id,
+            x: rect.right <= centerX ? rect.right + gap : rect.left - gap,
+            y: rect.centerY,
+          };
+        };
         const points = [
-          { id: "planner", x: headingRect.left, y: headingRect.centerY },
+          branchTo(plannerHeading.firstElementChild, "planner", planner),
           ...[
             [".content-section", ".section-heading"],
             [".audience-section", ".section-heading"],
@@ -395,8 +407,8 @@ export default function App() {
             const section = document.querySelector(sectionSelector);
             const heading = section?.querySelector(headingSelector);
             if (!section || !heading) return [];
-            const rect = layoutRectIn(heading, section);
-            return [{ id: `section-${index}`, x: rect.left, y: rect.centerY }];
+            const target = index === 2 ? heading.firstElementChild : heading;
+            return [branchTo(target, `section-${index}`, section)];
           }),
         ];
         const lineEnd = shell.scrollHeight - 12;

@@ -906,6 +906,11 @@ body::before {
 }
 @media (prefers-reduced-motion: reduce) {
   body::before, .brand-word-bolt, .brand-mark i, .brand-cell { animation: none; }
+  .hero-section.motion-reveal .hero-identity {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 .main-content { padding-top: 0; }
@@ -924,6 +929,17 @@ body::before {
   flex-direction: column;
   gap: clamp(22px, 4vh, 38px);
   transform: translateY(-2vh);
+}
+.hero-section.motion-reveal .hero-identity {
+  transition: opacity .8s ease, transform 1s cubic-bezier(.2,.72,.25,1);
+}
+.motion-ready .hero-section.motion-reveal:not(.is-visible) .hero-identity {
+  opacity: 0;
+  transform: translateY(-2vh) scale(.72);
+}
+.hero-section.motion-reveal.is-visible .hero-identity {
+  opacity: 1;
+  transform: translateY(-2vh) scale(1);
 }
 .brand-mark.hero-brand-mark {
   width: 44px;

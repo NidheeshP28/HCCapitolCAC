@@ -439,58 +439,42 @@ export default function App() {
 
       <main className="main-content">
         <section className="page-heading motion-reveal">
-          <div>
+          <div className="hero-copy">
             <p className="eyebrow">COMMUNITY RESILIENCE <span>/</span> COUNTY PLANNING</p>
-            <h1>When the power goes out, who can reach help?</h1>
-            <p>Explore where backup-power centers could reach people who rely on electricity-dependent medical equipment—and where the gaps remain.</p>
+            <h1>When the grid goes quiet, <em>plan for the people.</em></h1>
+            <p>GridAid helps local teams explore where backup-power centers could reach people who rely on electricity-dependent medical equipment—and where the gaps remain.</p>
             <div className="hero-actions">
-              <a className="button-primary" href="#planner">Explore county plans <span aria-hidden="true">↘</span></a>
-              <a className="button-text" href="#how-it-works">How the estimates work</a>
+              <a className="button-primary" href="#planner">Explore the county planner <span aria-hidden="true">↘</span></a>
+              <a className="button-text" href="#how-it-works">See how it works</a>
             </div>
+            <aside className="planning-note">
+              <span className="note-mark" aria-hidden="true">i</span>
+              <div>
+                <span className="note-label">A planning tool, not a promise.</span>
+                <p>Coverage is estimated from public data. It is not a guarantee of access, available power, or safety.</p>
+              </div>
+            </aside>
           </div>
-          <aside className="planning-note">
-            <span className="note-mark" aria-hidden="true">i</span>
-            <div>
-              <span className="note-label">A planning aid, not a promise</span>
-              <p>Coverage is estimated from public data. It is not a guarantee of access, available power, or safety.</p>
-            </div>
-          </aside>
         </section>
 
         <section className="approach-band motion-reveal" aria-label="What the planner brings together">
           <div>
-            <span className="approach-index">01</span>
-            <p><b>Health estimates</b><small>Aggregate, ZIP-level emPOWER counts</small></p>
+            <span className="approach-index">INPUT</span>
+            <p><b>Public health estimates</b><small>ZIP-level counts, not individual records</small></p>
           </div>
           <div>
-            <span className="approach-index">02</span>
-            <p><b>Candidate locations</b><small>Publicly mapped community facilities</small></p>
-          </div>
-          <div>
-            <span className="approach-index">03</span>
-            <p><b>Visible trade-offs</b><small>Compare reach, budget, and coverage</small></p>
+            <span className="approach-index">OUTPUT</span>
+            <p><b>A plan to question together</b><small>Candidate sites, estimated reach, and visible gaps</small></p>
           </div>
         </section>
 
-        <section className="planner-intro motion-reveal">
-          <div>
-            <p className="eyebrow">A PRACTICAL STARTING POINT</p>
-            <h2>Make the trade-offs visible.</h2>
-            <p>Choose a county, adjust the number of candidate centers and estimated reach, then see which ZIP areas may remain underserved.</p>
-          </div>
-          <a className="planner-jump" href="#planner">
-            <span><b>Open the county planner</b><small>Compare locations on the map</small></span>
-            <span className="jump-arrow" aria-hidden="true">↘</span>
-          </a>
-        </section>
-
-        <section id="planner" className="planner-section motion-reveal">
-          <div className="planner-section-heading">
+        <section id="planner" className="product-section motion-reveal">
+          <div className="product-heading">
             <div>
-              <p className="eyebrow">INTERACTIVE PLANNING TOOL</p>
-              <h2>Explore a county plan</h2>
+              <p className="eyebrow">THE LIVE PLANNING TOOL</p>
+              <h2>See the map. Test the assumptions.</h2>
             </div>
-            <p>Change the county, center budget, or estimated reach to compare possible plans.</p>
+            <p>Every county, coverage figure, candidate site, and map below comes from the working planner—not a mockup.</p>
           </div>
           <PlannerDashboard />
         </section>
@@ -523,8 +507,7 @@ export default function App() {
             <h2>A shared picture for local planning.</h2>
           </div>
           <div className="audience-list">
-            <article><span>Emergency management</span><p>Use coverage estimates to start conversations about resource placement before an outage.</p></article>
-            <article><span>County planners</span><p>Compare how limited center budgets and different reach assumptions change the plan.</p></article>
+            <article><span>County and emergency teams</span><p>Compare center budgets and reach assumptions, then use coverage estimates to start resource-placement conversations before an outage.</p></article>
             <article><span>Community partners</span><p>Bring local knowledge to candidate locations and check access, capacity, staffing, and needs.</p></article>
           </div>
         </section>
@@ -550,11 +533,8 @@ export default function App() {
               <p>Population estimates do not include everyone who may need powered medical equipment. Small source counts are suppressed, and ZIP-level locations are approximate.</p>
               <p>Candidate sites are not verified for generator capacity, accessibility, staffing, or availability. Real access may be affected by roads, flooding, and mobility needs.</p>
             </article>
-            <article className="privacy-note">
-              <h3>Privacy by design</h3>
-              <p>GridAid uses aggregate estimates for planning; it does not identify or locate individuals.</p>
-            </article>
           </div>
+          <p className="privacy-note"><span>PRIVACY, BY DESIGN</span> GridAid uses aggregate estimates for planning; it does not identify or locate individuals.</p>
         </section>
       </main>
 

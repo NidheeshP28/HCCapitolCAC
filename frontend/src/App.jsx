@@ -402,7 +402,7 @@ export default function App() {
         const lineEnd = shell.scrollHeight - 12;
         const path = `M ${centerX} ${wordmarkRect.bottom} V ${lineEnd}`;
         const branches = points
-          .map(({ x, y }) => `M ${centerX} ${y - 12} H ${x} V ${y + 12} H ${centerX}`)
+          .map(({ x, y }) => `M ${centerX} ${y} H ${x}`)
           .join(" ");
         const nodes = [
           { id: "start", x: centerX, y: wordmarkRect.bottom },

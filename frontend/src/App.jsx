@@ -564,7 +564,6 @@ export default function App() {
               <p>Candidate sites are not verified for generator capacity, accessibility, staffing, or availability. Real access may be affected by roads, flooding, and mobility needs.</p>
             </article>
           </div>
-          <p className="privacy-note"><span>PRIVACY, BY DESIGN</span> GridAid uses aggregate estimates for planning; it does not identify or locate individuals.</p>
         </section>
       </main>
 

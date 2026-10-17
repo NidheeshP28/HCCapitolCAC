@@ -1,15 +1,15 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { usePlanner } from "../state/PlannerContext.jsx";
 import { boundsOf } from "../lib/zips.js";
-import { fmt, KIND, miles, peopleLabel, siteName } from "../lib/format.js";
+import { fmt, fmt1, KIND, miles, peopleLabel, siteName } from "../lib/format.js";
 
 const MILE_M = 1609.34;
 // Esri's light-gray canvas: a quiet street base with its labels in a separate layer, so the labels can sit above the ZIPs.
 const TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
 const LABELS = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}";
-const INK = "#14181b", PAPER = "#f2efe5", GAP = "#e0431b", SIGNAL = "#f4c21f";
+const INK = "#1b1d1f", PAPER = "#ffffff", GAP = "#c8462f";
 const NO_SHAPES = { zips: {} };
 
 const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -21,6 +21,38 @@ export default function MapView() {
   const P = usePlanner();
   const { county, plan, R, scale, activeZip, zipIndex, hoverCenter, focusReq, shapeError } = P;
   const shapes = P.shapes ?? (shapeError ? NO_SHAPES : null);
+  const { D } = P;
+
+  // replay: show only the first `step` centers and what they cover; null shows the whole plan
+  const [step, setStep] = useState(null);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => { setStep(null); setPlaying(false); }, [plan]);
+  const shown = useMemo(() => {
+    if (!plan || step == null || !county || !D) return plan;
+    const chosen = plan.chosen.slice(0, step), Z = county.zips.length;
+    const uncovered = new Set(), nearN = new Int16Array(Z), nearD = new Float64Array(Z).fill(Infinity);
+    let cov = 0;
+    county.zips.forEach((z, i) => {
+      chosen.forEach((c, j) => { const d = D[c.idx * Z + i]; if (d < nearD[i]) { nearD[i] = d; nearN[i] = j + 1; } });
+      if (nearD[i] <= R) cov += z.w; else uncovered.add(i);
+    });
+    return { ...plan, chosen, uncovered, nearN, nearD, cov: (100 * cov) / (county.total || 1) };
+  }, [plan, step, county, D, R]);
+
+  const N = plan?.chosen.length ?? 0;
+  useEffect(() => {
+    if (!playing) return;
+    const t = setTimeout(() => {
+      if ((step ?? N) >= N) { setPlaying(false); return; }
+      setStep((s) => (s ?? 0) + 1);
+    }, Math.max(120, Math.min(700, 12000 / Math.max(1, N))));
+    return () => clearTimeout(t);
+  }, [playing, step, N]);
+  const play = () => {
+    if (playing) { setPlaying(false); return; }
+    if (step == null || step >= N) setStep(0);
+    setPlaying(true);
+  };
 
   const elRef = useRef(null);
   const S = useRef({ pins: new Map(), rings: new Map(), items: [], fitted: null });
@@ -139,11 +171,11 @@ export default function MapView() {
   // ---- colours: people shade, out-of-reach hatch, tooltips ----
   useEffect(() => {
     const s = S.current;
-    if (!s.map || !county || !shapes || !scale || !plan || s.items.length !== county.zips.length) return;
+    if (!s.map || !county || !shapes || !scale || !shown || s.items.length !== county.zips.length) return;
     const raise = [];
     county.zips.forEach((z, i) => {
       const it = s.items[i];
-      const out = plan.uncovered.has(i);
+      const out = shown.uncovered.has(i);
       const fill = scale.colors[scale.classes[i]];
       if (it.point) it.base.setStyle({ fillColor: fill, color: out ? GAP : PAPER, weight: out ? 2.4 : 1.4 });
       else {
@@ -151,25 +183,25 @@ export default function MapView() {
         it.gap.setStyle({ fillOpacity: out ? 1 : 0 });
         if (out) raise.push(it.base);
       }
-      const d = plan.nearD[i];
+      const d = shown.nearD[i];
       it.base.setTooltipContent(
-        `<b>ZIP ${z.z}</b><span>${peopleLabel(z)} people</span><em class="${out ? "out" : "in"}">${out ? "Out of reach" : "Within reach"} · ${miles(d)} mi to #${plan.nearN[i]}</em>`
+        `<b>ZIP ${z.z}</b><span>${peopleLabel(z)} people</span><em class="${out ? "out" : "in"}">${out ? "Not covered" : "Covered"}${shown.chosen.length ? ` · ${miles(d)} mi to center ${shown.nearN[i]}` : ""}</em>`
       );
     });
     raise.forEach((l) => l.bringToFront());
-  }, [county, shapes, scale, plan]);
+  }, [county, shapes, scale, shown]);
 
   // ---- reach rings and numbered centers (reused between edits so dragging a slider does not flicker) ----
   useEffect(() => {
     const s = S.current;
-    if (!s.map || !plan) return;
+    if (!s.map || !shown) return;
     if (s.pinsFor !== county) {                       // site indexes mean different places in another county
       s.pinLayer.clearLayers();
       s.ringLayer.clearLayers();
       s.pins.clear();
       s.pinsFor = county;
     }
-    const keep = new Set(plan.chosen.map((c) => c.idx));
+    const keep = new Set(shown.chosen.map((c) => c.idx));
     for (const [idx, e] of s.pins) {
       if (!keep.has(idx)) {
         s.pinLayer.removeLayer(e.marker);
@@ -178,12 +210,12 @@ export default function MapView() {
         s.pins.delete(idx);
       }
     }
-    plan.chosen.forEach((c) => {
+    shown.chosen.forEach((c) => {
       let e = s.pins.get(c.idx);
       if (!e) {
         const at = [c.lat, c.lon];
-        const halo = L.circle(at, { pane: "rings", interactive: false, radius: R * MILE_M, color: PAPER, weight: 4, opacity: 0.7, fill: false });
-        const ring = L.circle(at, { pane: "rings", interactive: false, radius: R * MILE_M, color: INK, weight: 1.2, opacity: 0.92, dashArray: "4 5", fill: false });
+        const halo = L.circle(at, { pane: "rings", interactive: false, radius: R * MILE_M, color: PAPER, weight: 3, opacity: 0.6, fill: false });
+        const ring = L.circle(at, { pane: "rings", interactive: false, radius: R * MILE_M, color: INK, weight: 1, opacity: 0.55, fill: false });
         const marker = L.marker(at, { icon: pinIcon(c.n), zIndexOffset: 1000 - c.n, keyboard: false });
         marker.bindTooltip("", { direction: "top", offset: [0, -16], className: "ga-tip", opacity: 1 });
         marker.on("mouseover", () => cb.current.setHoverCenter(marker._n));
@@ -202,22 +234,22 @@ export default function MapView() {
         }
       }
       e.marker._n = c.n;
-      e.marker.setTooltipContent(`<b>${c.n}. ${esc(siteName(c).name)}</b><span>${esc(KIND[c.type] ?? c.type)} · +${fmt(c.gain)} people newly in reach</span>`);
+      e.marker.setTooltipContent(`<b>${c.n}. ${esc(siteName(c).name)}</b><span>${esc(KIND[c.type] ?? c.type)} · reaches ${fmt(c.gain)} more people</span>`);
     });
-  }, [plan, R, county]);
+  }, [shown, R, county]);
 
   useEffect(() => {
     for (const e of S.current.pins.values()) {
       const hot = hoverCenter != null && e.n === hoverCenter;
       e.marker.getElement()?.classList.toggle("is-hot", hot);
-      e.ring.setStyle({ weight: hot ? 2.4 : 1.2, opacity: hot ? 1 : 0.92 });
+      e.ring.setStyle({ weight: hot ? 2 : 1, opacity: hot ? 1 : 0.55 });
     }
-  }, [hoverCenter, plan]);
+  }, [hoverCenter, shown]);
 
   // ---- the ZIP under the cursor or pinned: outline, a line to its nearest center, and the distance ----
   useEffect(() => {
     const s = S.current;
-    if (!s.map || !county || !plan) return;
+    if (!s.map || !county || !shown) return;
     s.focusLayer.clearLayers();
     if (!activeZip) return;
     const i = zipIndex.get(activeZip);
@@ -226,19 +258,18 @@ export default function MapView() {
     const it = s.items[i];
     if (it && !it.point) {
       const ll = it.base.getLatLngs();
-      s.focusLayer.addLayer(L.polygon(ll, { pane: "focus", interactive: false, fill: false, color: INK, weight: 5, opacity: 0.9 }));
-      s.focusLayer.addLayer(L.polygon(ll, { pane: "focus", interactive: false, fill: false, color: SIGNAL, weight: 2.4 }));
+      s.focusLayer.addLayer(L.polygon(ll, { pane: "focus", interactive: false, fill: false, color: INK, weight: 2.5 }));
     } else {
-      s.focusLayer.addLayer(L.circleMarker([z.lat, z.lon], { pane: "focus", interactive: false, radius: 9, fill: false, color: SIGNAL, weight: 3 }));
+      s.focusLayer.addLayer(L.circleMarker([z.lat, z.lon], { pane: "focus", interactive: false, radius: 9, fill: false, color: INK, weight: 2.5 }));
     }
-    const c = plan.chosen[plan.nearN[i] - 1];
+    const c = shown.chosen[shown.nearN[i] - 1];
     if (c) {
-      const line = L.polyline([[z.lat, z.lon], [c.lat, c.lon]], { pane: "focus", interactive: false, color: INK, weight: 1.6, dashArray: "2 5" });
-      line.bindTooltip(`${miles(plan.nearD[i])} mi`, { permanent: true, direction: "center", className: "ga-dist", opacity: 1 });
+      const line = L.polyline([[z.lat, z.lon], [c.lat, c.lon]], { pane: "focus", interactive: false, color: INK, weight: 1.5, dashArray: "3 4" });
+      line.bindTooltip(`${miles(shown.nearD[i])} mi`, { permanent: true, direction: "center", className: "ga-dist", opacity: 1 });
       s.focusLayer.addLayer(line);
       s.focusLayer.addLayer(L.circleMarker([z.lat, z.lon], { pane: "focus", interactive: false, radius: 3.5, color: PAPER, weight: 1.5, fillColor: INK, fillOpacity: 1 }));
     }
-  }, [activeZip, plan, county, shapes, zipIndex]);
+  }, [activeZip, shown, county, shapes, zipIndex]);
 
   useEffect(() => {
     const m = S.current.map;
@@ -257,8 +288,21 @@ export default function MapView() {
       <div className="map-ctl">
         <button type="button" onClick={() => zoom(0.5)} aria-label="Zoom in">+</button>
         <button type="button" onClick={() => zoom(-0.5)} aria-label="Zoom out">−</button>
-        <button type="button" onClick={fit} aria-label="Fit the county" title="Fit the county">◎</button>
+        <button type="button" onClick={fit} aria-label="Show the whole county" title="Show the whole county">⤢</button>
       </div>
+      {N > 0 && (
+        <div className="replay">
+          <button type="button" className="replay-btn" onClick={play} aria-label={playing ? "Pause" : "Play: add the centers one at a time"}>
+            {playing ? "❚❚" : "▶"}
+          </button>
+          <input
+            type="range" min={0} max={N} step={1} value={step ?? N}
+            onChange={(e) => { setPlaying(false); setStep(Number(e.target.value)); }}
+            aria-label="Step through the centers" style={{ "--p": (step ?? N) / N }}
+          />
+          <span className="replay-l">{step == null ? `Play: add ${N} centers one at a time` : `${step} of ${N} centers · ${fmt1(shown.cov)}% covered`}</span>
+        </div>
+      )}
       {!shapes && !shapeError && <div className="map-wait">Drawing ZIP boundaries…</div>}
       {shapeError && <div className="map-wait warn">Boundaries unavailable. Showing ZIP points.</div>}
       <div className="map-foot">

@@ -22,7 +22,7 @@ export function loadShapes(fips) {
 export const RAMP = ["#dfe6ee", "#bccbdf", "#93add0", "#6486b3", "#365d8f", "#14335f"];
 
 export const SHADE_MODES = {
-  people: { label: "People", unit: "people", note: "People on power-dependent equipment in the ZIP" },
+  people: { label: "People", unit: "people", note: "People who rely on powered medical equipment in the ZIP" },
   density: { label: "Per sq mi", unit: "per sq mi", note: "People per square mile of ZIP area" },
 };
 

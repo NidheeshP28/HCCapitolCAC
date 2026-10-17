@@ -1,15 +1,15 @@
 :root {
-  /* paper and ink: a printed county sheet, not a dashboard */
-  --paper: #e6e2d6;
-  --paper-2: #d9d5c7;
-  --card: #f2efe5;
-  --card-2: #e8e4d7;
-  --ink: #14181b;
-  --ink-2: #394146;
-  --ink-3: #69727a;
-  --rule: rgba(20, 24, 27, 0.15);
-  --rule-2: rgba(20, 24, 27, 0.34);
-  --rule-3: rgba(20, 24, 27, 0.62);
+  /* white page, near-black ink, light gray hairlines */
+  --paper: #ffffff;
+  --paper-2: #f4f4f2;
+  --card: #ffffff;
+  --card-2: #f4f4f2;
+  --ink: #1b1d1f;
+  --ink-2: #45494d;
+  --ink-3: #7c8186;
+  --rule: rgba(0, 0, 0, 0.07);
+  --rule-2: rgba(0, 0, 0, 0.14);
+  --rule-3: rgba(0, 0, 0, 0.12);
 
   /* one data hue (blue, light to dark = more people) and one signal (out of reach) */
   --blue-1: #dfe6ee;
@@ -18,16 +18,18 @@
   --blue-4: #6486b3;
   --blue-5: #365d8f;
   --blue-6: #14335f;
-  --gap: #e0431b;
-  --gap-d: #b8340f;
+  --gap: #c8462f;
+  --gap-d: #a63a26;
+  --accent: #365d8f;
   --signal: #f4c21f;
 
-  --f-display: "Archivo Variable", "Archivo", "Arial Narrow", system-ui, sans-serif;
-  --f-body: "Public Sans Variable", "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --f-display: var(--sans);
+  --f-body: var(--sans);
   --f-logo: "Oxanium Variable", "Oxanium", "Arial Narrow", sans-serif;
-  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --f-mono: var(--sans);
 
   --gutter: 10px;
   --g: 6px;
-  --r: 3px;
+  --r: 6px;
 }

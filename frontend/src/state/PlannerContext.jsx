@@ -1,21 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { usePlan, KMIN, KMAX } from "../lib/usePlan.js";
+import { usePlan, KMIN } from "../lib/usePlan.js";
 import { buildScale, loadShapes } from "../lib/zips.js";
+import { estimate, sitesFor } from "../lib/budget.js";
 
 const TYPE_BONUS = { library: 0.3, community_centre: 0.3, school: 0.2, fire_station: 0.1 };
 const Ctx = createContext(null);
 export const usePlanner = () => useContext(Ctx);
 
+// Only the county is in the link for now: centers and reach follow from the county's fixed budget.
 function readHash() {
   const p = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-  const num = (key) => (p.has(key) && Number.isFinite(Number(p.get(key))) ? Number(p.get(key)) : null);
-  const k = num("k");
-  return {
-    c: /^\d{5}$/.test(p.get("c") || "") ? p.get("c") : null,
-    k: k != null ? Math.max(KMIN, Math.min(KMAX, Math.round(k))) : null,
-    r: num("r"),
-    m: ["robust", "optimal"].includes(p.get("m")) ? p.get("m") : null,
-  };
+  return { c: /^\d{5}$/.test(p.get("c") || "") ? p.get("c") : null };
 }
 
 export function PlannerProvider({ children }) {
@@ -25,9 +20,10 @@ export function PlannerProvider({ children }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [fips, setFipsRaw] = useState(init.current.c);
-  const [k, setK] = useState(init.current.k ?? 5);
-  const [radius, setRadius] = useState(init.current.r);
-  const [mode, setMode] = useState(init.current.m ?? "phased");
+  const [kSet, setK] = useState(null);         // null: as many generators as the fixed budget buys
+  const [gen, setGen] = useState("diesel");     // generator type the budget is spent on
+  const [radius, setRadius] = useState(null);
+  const [mode, setMode] = useState("optimal");
   const [shade, setShade] = useState("people");
   const [hoverZip, setHoverZip] = useState(null);
   const [pinZip, setPinZip] = useState(null);
@@ -55,6 +51,7 @@ export function PlannerProvider({ children }) {
 
   const setFips = useCallback((id) => {
     setFipsRaw(id);
+    setK(null);
     setRadius(null);
     setPinZip(null);
     setHoverZip(null);
@@ -70,7 +67,9 @@ export function PlannerProvider({ children }) {
     return () => { live = false; };
   }, [fips]);
 
-  const solved = usePlan({ data, fips, k, radius, mode });
+  const est = useMemo(() => estimate(fips, data?.counties[fips]), [fips, data]);
+  const k = kSet ?? (est ? sitesFor(est, gen, data.counties[fips]) : KMIN);
+  const solved = usePlan({ data, fips, k, radius: radius ?? est?.reach ?? null, mode });
   const { county } = solved;
   const shapesNow = shapes && shapes.fips === fips ? shapes : null;
   const scale = useMemo(() => (county && shapesNow ? buildScale(county, shapesNow, shade) : null), [county, shapesNow, shade]);
@@ -105,17 +104,14 @@ export function PlannerProvider({ children }) {
   useEffect(() => {
     if (!fips) return;
     const t = setTimeout(() => {
-      const p = new URLSearchParams({ c: fips, k: String(k) });
-      if (radius != null) p.set("r", String(radius));
-      if (mode !== "phased") p.set("m", mode);
-      const hash = `#${p.toString()}`;
+      const hash = `#c=${fips}`;
       if (hash !== window.location.hash) window.history.replaceState(null, "", hash);
     }, 250);
     return () => clearTimeout(t);
-  }, [fips, k, radius, mode]);
+  }, [fips]);
 
   const value = {
-    data, error, fips, setFips, k, setK, radius, setRadius, mode, setMode,
+    data, error, fips, setFips, k, setK, est, gen, setGen, radius, setRadius, mode, setMode,
     shade, setShade,
     hoverZip, setHoverZip, pinZip, setPinZip, hoverCenter, setHoverCenter,
     activeZip: hoverZip ?? pinZip,

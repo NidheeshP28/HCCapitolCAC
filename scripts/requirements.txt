@@ -3,3 +3,4 @@ numpy
 scipy
 pyshp
 shapely>=2.1
+openpyxl

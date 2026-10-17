@@ -2,12 +2,12 @@ import { useState } from "react";
 
 const TYPES = ["Library", "School", "Community center", "Fire station", "Place of worship", "Other"];
 const GETS = [
-  "An estimate of how much backup power the building would need",
+  "A backup power estimate for the building",
   "Help finding grant money for a generator",
-  "A place on the GridAid map as a community partner",
+  "A spot on the GridAid map",
   "A window sign so neighbors know where to go",
 ];
-const OTHER = ["Volunteer at a site", "Check buildings in your county", "Bring GridAid to your county", "Help build it (open source)"];
+const OTHER = ["Volunteer at a site", "Check buildings in your county", "Bring GridAid to your county", "Join our team"];
 
 function Choice({ name, options, value, onChange }) {
   return (
@@ -40,11 +40,11 @@ export default function JoinForm() {
       <div className="join-pitch">
         <p className="join-kick">Most needed</p>
         <h3 className="join-h">Offer a building as a backup-power site</h3>
-        <p className="join-lead">When the power is out for days, neighbors who need electricity to stay healthy need somewhere to go. A library, school, community center, or fire station can be that place.</p>
+        <p className="join-lead">When the power is out for days, people who rely on medical equipment need somewhere to go. Your building can be that place.</p>
         <h4>What you get</h4>
         <ul className="join-gets">{GETS.map((g) => <li key={g}>{g}</li>)}</ul>
         <h4>What it involves</h4>
-        <p>Offering is free. We pass the building to your county's emergency team; they contact you, and you decide whether to take part. Sites open only during long outages.</p>
+        <p>It's free. We pass your building to the county's emergency team, and you decide whether to take part.</p>
         <h4>Other ways to help</h4>
         <ul className="join-other">{OTHER.map((o) => <li key={o}>{o}</li>)}</ul>
       </div>
@@ -59,7 +59,7 @@ export default function JoinForm() {
       ) : (
         <form className="jf" onSubmit={submit} noValidate>
           <fieldset>
-            <legend><span>01</span> The building</legend>
+            <legend>The building</legend>
             <label className="jf-f wide"><span>Building name</span><input required name="building" placeholder="Main Street Library" autoComplete="organization" /></label>
             <label className="jf-f"><span>Type</span>
               <select required name="type" defaultValue=""><option value="" disabled>Choose one</option>{TYPES.map((t) => <option key={t}>{t}</option>)}</select>
@@ -68,14 +68,14 @@ export default function JoinForm() {
             <label className="jf-f wide"><span>Address</span><input required name="address" placeholder="Street, town, ZIP" autoComplete="street-address" /></label>
           </fieldset>
           <fieldset>
-            <legend><span>02</span> You</legend>
+            <legend>You</legend>
             <label className="jf-f"><span>Your name</span><input required name="name" autoComplete="name" /></label>
             <label className="jf-f"><span>Your role</span><input name="role" placeholder="Owner, director, manager" autoComplete="organization-title" /></label>
             <label className="jf-f"><span>Email</span><input required name="email" type="email" autoComplete="email" /></label>
             <label className="jf-f"><span>Phone</span><input name="phone" type="tel" autoComplete="tel" /></label>
           </fieldset>
           <fieldset>
-            <legend><span>03</span> Readiness</legend>
+            <legend>Readiness</legend>
             <div className="jf-f"><span>Backup generator already?</span><Choice name="gen" options={["Yes", "No", "Not sure"]} value={f.gen} onChange={set("gen")} /></div>
             <div className="jf-f"><span>Step-free entrance?</span><Choice name="access" options={["Yes", "No"]} value={f.access} onChange={set("access")} /></div>
           </fieldset>

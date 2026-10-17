@@ -30,9 +30,9 @@ export function LegendCard() {
         <span>{hi != null ? short(hi, shade) : "–"}</span>
       </div>
       <ul className="lg-keys">
-        <li><i className="k-hatch" /> Out of reach</li>
+        <li><i className="k-hatch" /> Not covered</li>
         <li><i className="k-pin">1</i> Center</li>
-        <li><i className="k-ring" /> {R} mi reach</li>
+        <li><i className="k-ring" /> {R} mi</li>
       </ul>
     </Card>
   );

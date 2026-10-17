@@ -3,7 +3,7 @@
 
 const RAD = Math.PI / 180;
 export const TARGETS = [80, 90, 95];
-export const KLIVE = 40;                       // how many centers the live greedy computes (for "budget needed")
+export const KLIVE = 300;                      // how many centers the live greedy computes (a big budget buys ~270 hookups)
 
 export function hav(lat1, lon1, lat2, lon2) {  // miles
   const x = Math.sin(((lat2 - lat1) * RAD) / 2) ** 2 +

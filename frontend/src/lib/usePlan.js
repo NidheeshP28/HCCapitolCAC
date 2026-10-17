@@ -3,7 +3,7 @@ import { buildDistances, evaluatePlan, getCurve, minCenters } from "./plan.js";
 import { solve } from "./solver.js";
 
 export const KMIN = 3;
-export const KMAX = 25;        // plans for more than KPRE centers are computed live in the browser
+export const KMAX = 300;       // plans for more than KPRE centers are computed live in the browser
 export const KPRE = 10;        // largest budget with a precomputed plan (and a robust plan)
 export const RMIN = 0.25, RMAX = 60;       // reach slider, miles, log scale
 export const TARGET = 90;      // coverage the "Optimal" buttons aim for
@@ -53,6 +53,22 @@ export function usePlan({ data, fips, k: kNow, radius: rNow, mode }) {
         : { sel: curve.sel.slice(0, k), gains: curve.gains.slice(0, k), ...ev(curve.sel.slice(0, k)) };
     }
     const { zips } = county, Z = zips.length, tot = county.total || 1;
+    // a center that reaches no one the others don't already reach is not needed: drop it (last ones first)
+    const cnt = new Uint16Array(Z);
+    for (const s of v.sel) for (let z = 0; z < Z; z++) if (D[s * Z + z] <= R) cnt[z]++;
+    const keep = v.sel.map(() => true);
+    for (let i = v.sel.length - 1; i >= 0; i--) {
+      const s = v.sel[i];
+      let needed = false;
+      for (let z = 0; z < Z && !needed; z++) if (D[s * Z + z] <= R && cnt[z] < 2 && zips[z].w > 0) needed = true;
+      if (needed) continue;
+      keep[i] = false;
+      for (let z = 0; z < Z; z++) if (D[s * Z + z] <= R) cnt[z]--;
+    }
+    if (keep.includes(false) && keep.includes(true)) {
+      const sel = v.sel.filter((_, i) => keep[i]);
+      v = { sel, gains: v.gains?.filter((_, i) => keep[i]), ...ev(sel) };
+    }
     let run = 0;
     const chosen = v.sel.map((si, i) => {
       run += v.gains?.[i] ?? 0;

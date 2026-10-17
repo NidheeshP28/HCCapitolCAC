@@ -10,9 +10,6 @@ import { useMotionMode } from "../lib/hooks.js";
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const NAV = [
-  ["#why", "Why"],
-  ["#how", "How it works"],
-  ["#limits", "Limits"],
   ["#data", "Join us"],
 ];
 
@@ -80,13 +77,13 @@ export default function Stage() {
 
       tl.fromTo(
         cell,
-        { scale: () => geo().s, x: () => geo().x, y: () => geo().y, "--bw": "5px" },
-        { scale: 1, x: 0, y: 0, "--bw": "1px", ease: "power2.inOut", duration: 1 },
+        { scale: () => geo().s, x: () => geo().x, y: () => geo().y, "--bw": "5px", borderColor: "#14181b" },
+        { scale: 1, x: 0, y: 0, "--bw": "1px", borderColor: "rgba(0,0,0,0.12)", ease: "power2.inOut", duration: 1 },
         0
       )
         .to(q(".hero-logo"), { y: -110, scale: 0.86, autoAlpha: 0, ease: "power2.in", duration: 0.75 }, 0)
         .to(q(".fx-out"), { autoAlpha: 0, y: -18, duration: 0.3, stagger: 0.03, ease: "power1.out" }, 0)
-        .to(q(".stage-grid"), { opacity: 0.45, duration: 1.2 }, 0)
+        .to(q(".stage-grid"), { opacity: 0, duration: 1.2 }, 0)
         .fromTo(docks("top"), { autoAlpha: 0, y: -34 }, { autoAlpha: 1, y: 0, duration: 0.42, stagger: 0.05, ease: "power3.out" }, 0.62)
         .fromTo(docks("right"), { autoAlpha: 0, x: 44 }, { autoAlpha: 1, x: 0, duration: 0.45, stagger: 0.07, ease: "power3.out" }, 0.7)
         .fromTo(docks("bottom"), { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: 0.42, stagger: 0.04, ease: "power3.out" }, 0.78)
@@ -139,7 +136,7 @@ export default function Stage() {
 
         <div className="hero-lead-wrap fx-out">
           <p className="hero-lead fx-in">
-            By: Aaron Qin, Hardy Wang, Anay Sura, Nideesh Pusuluri <br />
+            By: Aaron Qin, Hardy Wang, Anay Sura, Nidheesh Pusuluri <br />
             For Capitol 2026
           </p>
         </div>

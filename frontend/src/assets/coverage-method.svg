@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 430" fill="none">
+  <title>An illustrative map showing how GridAid compares candidate backup-power centers with ZIP-level need</title>
+  <desc>A conceptual map diagram, not live county data. Candidate facilities, estimated service reach, and an uncovered ZIP area are shown against a quiet street map.</desc>
+  <defs>
+    <pattern id="map-grid" width="22" height="22" patternUnits="userSpaceOnUse">
+      <path d="M22 0H0v22" stroke="#A8AE9A" stroke-opacity=".055"/>
+    </pattern>
+    <clipPath id="map-clip"><rect x="20" y="20" width="580" height="390" rx="3"/></clipPath>
+    <pattern id="gap-hatch" width="8" height="8" patternTransform="rotate(35)" patternUnits="userSpaceOnUse">
+      <path d="M0 0v8" stroke="#D48768" stroke-opacity=".23" stroke-width="2"/>
+    </pattern>
+  </defs>
+  <rect x="20" y="20" width="580" height="390" rx="3" fill="#171B17" stroke="#444940"/>
+  <g clip-path="url(#map-clip)">
+    <path d="M20 20h580v390H20z" fill="url(#map-grid)"/>
+    <g stroke="#B6B7A6" stroke-opacity=".21" stroke-width="1">
+      <path d="M-30 93c65-42 111-43 158-9s79 31 122 1 75-32 116-4 77 42 121 8 83-35 151-2"/>
+      <path d="M-30 102c65-42 111-43 158-9s79 31 122 1 75-32 116-4 77 42 121 8 83-35 151-2"/>
+      <path d="M-41 277c67-27 112-23 164 15 47 33 83 35 126 5 41-29 81-28 124 4 46 34 89 34 138 4 53-33 94-32 152-1"/>
+      <path d="M-36 289c67-27 112-23 164 15 47 33 83 35 126 5 41-29 81-28 124 4 46 34 89 34 138 4 53-33 94-32 152-1"/>
+      <path d="M152-30c-18 53-13 90 20 122s41 62 12 96-23 60 12 91 45 67 22 121"/>
+      <path d="M163-31c-18 53-13 90 20 122s41 62 12 96-23 60 12 91 45 67 22 121"/>
+      <path d="M417-24c-21 56-17 87 17 115s38 60 5 96-33 66 2 95 43 65 19 121"/>
+      <path d="M429-26c-21 56-17 87 17 115s38 60 5 96-33 66 2 95 43 65 19 121"/>
+    </g>
+    <g fill="#899282" fill-opacity=".09" stroke="#BAC0A9" stroke-opacity=".23" stroke-width="1">
+      <path d="m39 124 106-10 25 64-79 44-51-30z"/>
+      <path d="m170 111 99 3 17 64-91 29-25-29z"/>
+      <path d="m294 117 99-18 22 55-31 67-95-32z"/>
+      <path d="m434 112 105 9 30 69-96 24-91-20z"/>
+      <path d="m43 212 68 8 33 54-28 55-81-15z"/>
+      <path d="m141 210 60-29 90 30-3 73-91 14-39-24z"/>
+      <path d="m291 190 93 30 2 82-81 27-17-49z"/>
+      <path d="m401 205 73-18 103 24 6 94-73 24-72-35-42-22z"/>
+    </g>
+    <path d="m474 224 63-22 52 23 8 97-57 19-57-32-26-44z" fill="url(#gap-hatch)" stroke="#D58C70" stroke-opacity=".68" stroke-width="1.4" stroke-dasharray="5 5"/>
+    <text x="507" y="275" fill="#E0A185" font-family="Arial,sans-serif" font-size="9" font-weight="700" letter-spacing="1">A GAP TO</text>
+    <text x="507" y="288" fill="#E0A185" font-family="Arial,sans-serif" font-size="9" font-weight="700" letter-spacing="1">INVESTIGATE</text>
+
+    <g fill="none" stroke="#D4C8A9" stroke-opacity=".42" stroke-width="1.3">
+      <path d="M14 354c73-30 99-77 153-88 54-11 76 30 129 18 62-15 67-81 117-89 43-8 81 26 166 13"/>
+      <path d="M23 361c73-30 99-77 153-88 54-11 76 30 129 18 62-15 67-81 117-89 43-8 81 26 166 13"/>
+      <path d="M241 24c11 53 31 81 70 94s44 33 33 66-7 58 21 79c31 24 41 52 38 111"/>
+    </g>
+    <path d="M139 246c35-58 103-78 155-44 26 17 39 41 44 69 12-68 68-111 123-91 39 14 62 54 57 96" stroke="#7FAF98" stroke-opacity=".9" stroke-width="1.6" stroke-dasharray="5 5"/>
+    <path d="M139 246c35-58 103-78 155-44 26 17 39 41 44 69 12-68 68-111 123-91 39 14 62 54 57 96" stroke="#7FAF98" stroke-opacity=".13" stroke-width="12"/>
+
+    <g fill="#74AA90" fill-opacity=".78">
+      <circle cx="74" cy="171" r="4"/><circle cx="113" cy="239" r="7"/><circle cx="199" cy="138" r="5"/>
+      <circle cx="219" cy="224" r="8"/><circle cx="274" cy="290" r="5"/><circle cx="319" cy="170" r="7"/>
+      <circle cx="374" cy="259" r="6"/><circle cx="409" cy="130" r="4"/><circle cx="449" cy="300" r="7"/>
+      <circle cx="370" cy="330" r="4"/><circle cx="149" cy="314" r="5"/>
+    </g>
+    <g fill="#D7846B" fill-opacity=".86">
+      <circle cx="516" cy="241" r="7"/><circle cx="567" cy="307" r="4"/>
+    </g>
+    <g>
+      <circle cx="254" cy="252" r="19" fill="#7FAF98" fill-opacity=".1" stroke="#9BC4AD" stroke-opacity=".57"/>
+      <circle cx="254" cy="252" r="11" fill="#1A201B" stroke="#E8E1D1" stroke-width="1.5"/>
+      <path d="M250 252h8m-4-4v8" stroke="#E8E1D1" stroke-width="1.2" stroke-linecap="round"/>
+      <circle cx="434" cy="226" r="19" fill="#7FAF98" fill-opacity=".1" stroke="#9BC4AD" stroke-opacity=".57"/>
+      <circle cx="434" cy="226" r="11" fill="#1A201B" stroke="#E8E1D1" stroke-width="1.5"/>
+      <path d="M430 226h8m-4-4v8" stroke="#E8E1D1" stroke-width="1.2" stroke-linecap="round"/>
+    </g>
+
+    <path d="M38 42h18" stroke="#D99571" stroke-width="2"/>
+    <text x="38" y="59" fill="#E6E1D5" font-family="Arial,sans-serif" font-size="8" font-weight="700" letter-spacing="1.2">HOW TO READ THE MAP</text>
+    <text x="38" y="74" fill="#AEB0A3" font-family="Arial,sans-serif" font-size="9">How far could a center reach — and where would it fall short?</text>
+    <path d="M38 375h544" stroke="#4B5047"/>
+    <g font-family="Arial,sans-serif" font-size="8">
+      <circle cx="48" cy="391" r="3.5" fill="#74AA90"/>
+      <text x="57" y="394" fill="#D4D3C7">ZIP-level need</text>
+      <circle cx="171" cy="391" r="5" fill="#1A201B" stroke="#E8E1D1" stroke-width="1.2"/>
+      <path d="M169 391h4m-2-2v4" stroke="#E8E1D1" stroke-width=".8"/>
+      <text x="182" y="394" fill="#D4D3C7">candidate center</text>
+      <path d="M302 391h24" stroke="#7FAF98" stroke-width="1.5" stroke-dasharray="4 4"/>
+      <text x="333" y="394" fill="#D4D3C7">estimated reach</text>
+      <path d="M458 385h22v12h-22z" fill="url(#gap-hatch)" stroke="#D58C70" stroke-width=".8"/>
+      <text x="486" y="394" fill="#D4D3C7">coverage gap</text>
+    </g>
+  </g>
+</svg>

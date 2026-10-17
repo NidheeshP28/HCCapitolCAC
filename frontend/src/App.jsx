@@ -4,6 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "./styles.css";
 import { TARGETS, KLIVE, buildDistances, evaluatePlan, getCurve, minCenters, minReach } from "./lib/plan.js";
+import coverageMethodIllustration from "./assets/coverage-method.svg";
 
 const KMIN = 3;
 const KMAX = 25;          // budget slider; plans for more than KPRE centers are computed live in the browser
@@ -455,6 +456,16 @@ export default function App() {
               </div>
             </aside>
           </div>
+          <figure className="hero-method">
+            <img
+              src={coverageMethodIllustration}
+              alt="Illustrative map diagram: ZIP-level need, candidate centers, their estimated reach, and a coverage gap. This is not live county data."
+            />
+            <figcaption>
+              <span>ILLUSTRATIVE ONLY</span>
+              <span>A diagram of the decisions—not a county report.</span>
+            </figcaption>
+          </figure>
         </section>
 
         <section className="approach-band motion-reveal" aria-label="What the planner brings together">

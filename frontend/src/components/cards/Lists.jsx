@@ -1,26 +1,23 @@
 import { usePlanner } from "../../state/PlannerContext.jsx";
 import { fmt, fmt1, KIND, peopleLabel, siteName } from "../../lib/format.js";
-import { KPRE } from "../../lib/usePlan.js";
+import { MODES } from "../../lib/usePlan.js";
 import Card from "../ui/Card.jsx";
 
+const MODE_HELP = {
+  phased: "Centers are added one at a time; earlier ones stay put as the budget grows.",
+  robust: "Best average coverage if the real reach is 20% shorter or longer than set.",
+  optimal: "The best plan the exact search can find at this reach. Centers can move when the budget changes.",
+};
+
 function Placement() {
-  const { setMode, countyHasRobust, hasRobust, robust, k, county } = usePlanner();
+  const { mode, setMode, plan } = usePlanner();
   return (
-    <div className="seg seg-s" role="radiogroup" aria-label="Placement method">
-      <button type="button" role="radio" aria-checked={!robust} className={!robust ? "on" : ""} onClick={() => setMode("phased")} title="Centers are added one at a time; earlier ones stay put.">
-        Phased
-      </button>
-      <button
-        type="button"
-        role="radio"
-        aria-checked={robust}
-        className={robust ? "on" : ""}
-        onClick={() => setMode("robust")}
-        disabled={!hasRobust}
-        title={countyHasRobust && !hasRobust ? `Robust plans are solved at this county's default reach (${county?.R} mi) and up to ${KPRE} centers.` : "Best average coverage if reach is 20% shorter or longer."}
-      >
-        Robust
-      </button>
+    <div className={`seg seg-s${plan?.pending ? " is-busy" : ""}`} role="radiogroup" aria-label="Placement method" aria-busy={!!plan?.pending}>
+      {Object.entries(MODES).map(([id, label]) => (
+        <button key={id} type="button" role="radio" aria-checked={mode === id} className={mode === id ? "on" : ""} onClick={() => setMode(id)} title={MODE_HELP[id]}>
+          {label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -30,7 +27,8 @@ export function CentersCard() {
   const rows = plan?.chosen ?? [];
   const maxGain = Math.max(1, ...rows.map((c) => c.gain));
   return (
-    <Card title="Planned centers" aside={<Placement />} dock="right" className="c-centers">
+    <Card title="Placement" aside={<Placement />} dock="right" className="c-centers">
+      {plan?.source === "optimal" && <p className="proof">{plan.exact ? "Proven best possible at this reach." : "Best found; not proven optimal in the time allowed."}</p>}
       <ol className="rows" onMouseLeave={() => setHoverCenter(null)}>
         {rows.map((c) => (
           <li key={c.idx} className={hoverCenter === c.n ? "hot" : ""} style={{ "--w": c.gain / maxGain }}>

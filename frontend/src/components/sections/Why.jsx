@@ -11,7 +11,11 @@ export default function Why() {
   useReveal(ref);
   return (
     <section className="sec why" id="why" ref={ref}>
-      <SectionHead n="01" title="Why this exists" />
+      <SectionHead
+        n="01"
+        title="Why this exists"
+        action={<button type="button" className="logistics-btn">See Logistics <span aria-hidden="true">→</span></button>}
+      />
       <ScrollReveal containerClassName="why-statement" baseOpacity={0.1} baseRotation={0} blurStrength={5} wordAnimationEnd="bottom 70%" rotationEnd="bottom 70%">
         When the power stays out for days, the people in danger first are the ones on home oxygen, dialysis, and powered wheelchairs. Public data already says how many of them live in each ZIP code. What a county lacks is a way to ask: if we can staff only a handful of backup-power centers, where do they go?
       </ScrollReveal>

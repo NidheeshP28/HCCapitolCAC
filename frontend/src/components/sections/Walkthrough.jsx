@@ -8,6 +8,7 @@ import { boundsOf } from "../../lib/zips.js";
 import { fmt, fmt1, KIND, siteName } from "../../lib/format.js";
 import Num from "../ui/Num.jsx";
 import SectionHead from "./SectionHead.jsx";
+import AlgoCompare from "./AlgoCompare.jsx";
 import { useReveal } from "./useReveal.js";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -175,6 +176,7 @@ export default function Walkthrough() {
           </figcaption>
         </figure>
       </div>
+      <AlgoCompare />
     </section>
   );
 }

@@ -23,7 +23,6 @@ export default function MapView() {
   const shapes = P.shapes ?? (shapeError ? NO_SHAPES : null);
 
   const elRef = useRef(null);
-  const hintRef = useRef(null);
   const S = useRef({ pins: new Map(), rings: new Map(), items: [], fitted: null });
   const cb = useRef(P);
   cb.current = P;
@@ -35,8 +34,10 @@ export default function MapView() {
       zoomControl: false,
       attributionControl: false,
       scrollWheelZoom: false,
-      zoomSnap: 0.25,
+      zoomSnap: 0,
       zoomDelta: 0.5,
+      inertiaDeceleration: 2200,
+      easeLinearity: 0.18,
       minZoom: 3,
       maxZoom: 17,
     }).setView([39, -98], 4);
@@ -56,18 +57,21 @@ export default function MapView() {
       focusLayer: L.layerGroup().addTo(map),
     });
 
-    // The page scrolls, so the wheel scrolls the page; hold Ctrl/Cmd (or pinch) to zoom the map.
-    let hintTimer = 0;
+    // Smooth wheel and pinch zoom: each wheel event moves a target zoom, and every frame eases a fifth of the way
+    // toward it around the cursor. Fractional zoom (zoomSnap 0) keeps it continuous instead of stepping by levels.
+    let target = null, anchor = null, raf = 0;
+    const ease = () => {
+      const z = map.getZoom(), d = target - z;
+      const done = Math.abs(d) < 0.003;
+      map.setZoomAround(anchor, done ? target : z + d * 0.2, { animate: false });
+      if (done) { target = null; raf = 0; } else raf = requestAnimationFrame(ease);
+    };
     const onWheel = (e) => {
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
-        const z = map.getZoom() - e.deltaY * (e.deltaMode ? 0.4 : 0.012);
-        map.setZoomAround(map.mouseEventToContainerPoint(e), Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), z)), { animate: false });
-      } else if (hintRef.current) {
-        hintRef.current.classList.add("show");
-        clearTimeout(hintTimer);
-        hintTimer = setTimeout(() => hintRef.current?.classList.remove("show"), 1400);
-      }
+      e.preventDefault();
+      const per = e.deltaMode === 1 ? 0.06 : e.ctrlKey ? 0.012 : 0.0024;     // lines, pinch, pixels
+      target = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), (target ?? map.getZoom()) - e.deltaY * per));
+      anchor = map.mouseEventToContainerPoint(e);
+      if (!raf) raf = requestAnimationFrame(ease);
     };
     el.addEventListener("wheel", onWheel, { passive: false });
 
@@ -82,7 +86,7 @@ export default function MapView() {
 
     return () => {
       ro.disconnect();
-      clearTimeout(hintTimer);
+      cancelAnimationFrame(raf);
       el.removeEventListener("wheel", onWheel);
       map.remove();
       S.current = { pins: new Map(), rings: new Map(), items: [], fitted: null };
@@ -241,7 +245,7 @@ export default function MapView() {
     if (m && focusReq) m.flyTo([focusReq.lat, focusReq.lon], Math.max(m.getZoom(), 11), { duration: 0.8 });
   }, [focusReq]);
 
-  const zoom = (d) => S.current.map?.setZoom(S.current.map.getZoom() + d);
+  const zoom = (d) => S.current.map?.flyTo(S.current.map.getCenter(), S.current.map.getZoom() + d, { duration: 0.35 });
   const fit = () => S.current.bounds && S.current.map.flyToBounds(S.current.bounds, { padding: [30, 30], duration: 0.8 });
   return (
     <section className="card map-card" data-map-cell aria-label="Map of ZIP codes, planned centers and reach">
@@ -255,7 +259,6 @@ export default function MapView() {
         <button type="button" onClick={() => zoom(-0.5)} aria-label="Zoom out">−</button>
         <button type="button" onClick={fit} aria-label="Fit the county" title="Fit the county">◎</button>
       </div>
-      <div ref={hintRef} className="map-hint">Hold <kbd>⌘</kbd>/<kbd>Ctrl</kbd> and scroll to zoom</div>
       {!shapes && !shapeError && <div className="map-wait">Drawing ZIP boundaries…</div>}
       {shapeError && <div className="map-wait warn">Boundaries unavailable. Showing ZIP points.</div>}
       <div className="map-foot">

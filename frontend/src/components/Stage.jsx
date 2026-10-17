@@ -13,7 +13,7 @@ const NAV = [
   ["#why", "Why"],
   ["#how", "How it works"],
   ["#limits", "Limits"],
-  ["#data", "Data"],
+  ["#data", "Join us"],
 ];
 
 export default function Stage() {

@@ -1,46 +1,58 @@
-import { useMemo } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { buildDistances, evaluatePlan, getCurve, minCenters } from "./plan.js";
+import { solve } from "./solver.js";
 
 export const KMIN = 3;
 export const KMAX = 25;        // plans for more than KPRE centers are computed live in the browser
 export const KPRE = 10;        // largest budget with a precomputed plan (and a robust plan)
 export const RMIN = 0.25, RMAX = 60;       // reach slider, miles, log scale
-export const TARGETS = [80, 90, 95];
+export const TARGET = 90;      // coverage the "Optimal" buttons aim for
+export const MODES = { phased: "Phased", robust: "Robust", optimal: "Optimal" };
 
 export const rToT = (r) => Math.max(0, Math.min(100, (100 * Math.log(r / RMIN)) / Math.log(RMAX / RMIN)));
 export const tToR = (t) => RMIN * Math.pow(RMAX / RMIN, t / 100);
 export const niceR = (r) => (r < 2 ? Math.round(r * 20) / 20 : r < 10 ? Math.round(r * 10) / 10 : Math.round(r * 2) / 2);
+export const niceRUp = (r) => (r < 2 ? Math.ceil(r * 20) / 20 : r < 10 ? Math.ceil(r * 10) / 10 : Math.ceil(r * 2) / 2);
 
-export function usePlan({ data, fips, k, radius, mode }) {
+// The controls show k and reach immediately; the plan follows a frame behind (useDeferredValue), so dragging a
+// slider never waits on the map. Robust and optimal plans not precomputed by build.py come from the worker.
+export function usePlan({ data, fips, k: kNow, radius: rNow, mode }) {
+  const k = useDeferredValue(kNow), radius = useDeferredValue(rNow);
   const county = data && fips ? data.counties[fips] ?? null : null;
   const R = county ? radius ?? county.R : 0;
   const atDefault = !county || radius == null || Math.abs(radius - county.R) < 1e-9;
   const pre = county && atDefault && k <= KPRE ? county.k[String(k)] ?? null : null;
-  const live = !!county && !pre;
 
   const D = useMemo(() => (county ? buildDistances(county) : null), [county]);
   const curve = useMemo(() => (county && D ? getCurve(county, D, R) : null), [county, D, R]);
-  const livePlan = useMemo(() => {
-    if (!live || !D) return null;
-    const sel = curve.sel.slice(0, k);
-    return { sel, gains: curve.gains.slice(0, k), ...evaluatePlan(county, D, sel, R, Number(fips) || 0) };
-  }, [live, D, curve, county, R, k, fips]);
 
-  const countyHasRobust = !!county && Array.isArray(county.k[String(KPRE)]?.rsel);
-  const hasRobust = !!pre && Array.isArray(pre.rsel);
-  const robust = mode === "robust" && hasRobust;
+  // robust/optimal from the worker, debounced so a slider drag sends one request, not forty
+  const preRobust = mode === "robust" && Array.isArray(pre?.rsel);
+  const asyncKey = county && mode !== "phased" && !preRobust ? `${fips}|${mode}|${k}|${R}` : null;
+  const [solved, setSolved] = useState(null);
+  useEffect(() => {
+    if (!asyncKey) return;
+    let live = true;
+    const t = setTimeout(() => {
+      solve(fips, county, "plan", { method: mode, k, R }).then((r) => live && setSolved({ key: asyncKey, ...r })).catch(() => {});
+    }, 160);
+    return () => { live = false; clearTimeout(t); };
+  }, [asyncKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const plan = useMemo(() => {
-    if (!county || !D) return null;
-    let v;
-    if (pre && robust)
-      v = { sel: pre.rsel, gains: pre.rgains, unc: pre.runc, cov: pre.rcov, red: pre.rred, exp: pre.rexp, lo: pre.rlo, hi: pre.rhi };
-    else if (pre)
-      v = { sel: pre.sel, gains: county.gains.slice(0, pre.sel.length), unc: pre.unc, cov: pre.cov, red: pre.red, exp: pre.exp, lo: pre.lo, hi: pre.hi };
-    else if (livePlan) v = { ...livePlan, unc: livePlan.unc };
-    else return null;
-    const { zips } = county, Z = zips.length;
-    const tot = county.total || 1;
+    if (!county || !D || !curve) return null;
+    const ev = (sel) => evaluatePlan(county, D, sel, R, Number(fips) || 0);
+    let v, source = mode, pending = false, exact = false;
+    if (preRobust) v = { sel: pre.rsel, gains: pre.rgains, unc: pre.runc, cov: pre.rcov, red: pre.rred, exp: pre.rexp, lo: pre.rlo, hi: pre.rhi };
+    else if (asyncKey && solved?.key === asyncKey) { v = { sel: solved.sel, gains: solved.gains, ...ev(solved.sel) }; exact = solved.exact; }
+    else {
+      pending = !!asyncKey;
+      source = "phased";
+      v = pre
+        ? { sel: pre.sel, gains: county.gains.slice(0, pre.sel.length), unc: pre.unc, cov: pre.cov, red: pre.red, exp: pre.exp, lo: pre.lo, hi: pre.hi }
+        : { sel: curve.sel.slice(0, k), gains: curve.gains.slice(0, k), ...ev(curve.sel.slice(0, k)) };
+    }
+    const { zips } = county, Z = zips.length, tot = county.total || 1;
     let run = 0;
     const chosen = v.sel.map((si, i) => {
       run += v.gains?.[i] ?? 0;
@@ -57,20 +69,10 @@ export function usePlan({ data, fips, k, radius, mode }) {
       nearN[z] = bi + 1;
       nearD[z] = best;
     }
-    const opt = pre?.opt ?? null;
-    return {
-      ...v,
-      chosen,
-      uncovered: new Set(v.unc),
-      nearN, nearD,
-      opt,
-      ratio: opt ? Math.min(100, (100 * v.cov) / opt) : null,
-      source: pre ? (robust ? "robust" : "phased") : "live",
-    };
-  }, [county, D, pre, robust, livePlan]);
+    return { ...v, chosen, uncovered: new Set(v.unc), nearN, nearD, source, pending, exact };
+  }, [county, D, curve, pre, preRobust, asyncKey, solved, mode, k, R, fips]);
 
-  const needs = useMemo(() => (curve ? TARGETS.map((t) => ({ target: t, centers: minCenters(curve, t) })) : null), [curve]);
+  const needed = useMemo(() => (curve ? minCenters(curve, TARGET) : null), [curve]);
 
-  return { county, R, atDefault, pre, live, D, curve, plan, countyHasRobust, hasRobust, robust, needs };
+  return { county, R, atDefault, D, curve, plan, needed };
 }
-

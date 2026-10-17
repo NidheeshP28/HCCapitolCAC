@@ -14,7 +14,7 @@ function readHash() {
     c: /^\d{5}$/.test(p.get("c") || "") ? p.get("c") : null,
     k: k != null ? Math.max(KMIN, Math.min(KMAX, Math.round(k))) : null,
     r: num("r"),
-    m: p.get("m") === "robust" ? "robust" : null,
+    m: ["robust", "optimal"].includes(p.get("m")) ? p.get("m") : null,
   };
 }
 
@@ -107,7 +107,7 @@ export function PlannerProvider({ children }) {
     const t = setTimeout(() => {
       const p = new URLSearchParams({ c: fips, k: String(k) });
       if (radius != null) p.set("r", String(radius));
-      if (mode === "robust") p.set("m", "robust");
+      if (mode !== "phased") p.set("m", mode);
       const hash = `#${p.toString()}`;
       if (hash !== window.location.hash) window.history.replaceState(null, "", hash);
     }, 250);

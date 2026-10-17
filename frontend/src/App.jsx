@@ -335,13 +335,12 @@ export default function App() {
       <main className="main-content">
         <section className="page-heading hero-section motion-reveal" aria-label="GridAid">
           <div className="hero-identity">
-            <BrandMark className="hero-brand-mark" />
             <h1 className="hero-wordmark"><BrandWord className="hero-wordmark-type" /></h1>
           </div>
-          <p className="hero-slogan">Backup power, placed where it is needed the most.</p>
         </section>
 
         <section id="planner" className="product-section motion-reveal">
+          <p className="hero-slogan">Backup power, placed where it is needed the most.</p>
           <div className="product-heading">
             <div>
               <SectionEyebrow>THE PLANNER</SectionEyebrow>

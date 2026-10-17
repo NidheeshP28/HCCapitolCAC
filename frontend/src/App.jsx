@@ -4,7 +4,6 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "./styles.css";
 import { TARGETS, KLIVE, buildDistances, evaluatePlan, getCurve, minCenters, minReach } from "./lib/plan.js";
-import coverageMethodIllustration from "./assets/coverage-method.svg";
 
 const KMIN = 3;
 const KMAX = 25;          // budget slider; plans for more than KPRE centers are computed live in the browser
@@ -35,32 +34,131 @@ function FitBounds({ bounds }) {
   return null;
 }
 
-function PlannerDashboard() {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
-  const [fips, setFips] = useState(null);
-  const [k, setK] = useState(5);
+function BrandMark() {
+  return (
+    <span className="brand-mark" aria-hidden="true">
+      <span className="brand-cell brand-cell-bolt">
+        <svg viewBox="0 0 12 16" focusable="false"><path d="M7.3 0 1.8 8h3.6L4.7 16l5.5-8H6.6L7.3 0Z" /></svg>
+      </span>
+      <i /><i /><i />
+    </span>
+  );
+}
+
+function BrandWord() {
+  return (
+    <span className="brand-word" aria-label="GridAid">
+      <span>Gr</span>
+      <svg className="brand-word-bolt" viewBox="0 0 12 16" focusable="false" aria-hidden="true">
+        <path d="M7.3 0 1.8 8h3.6L4.7 16l5.5-8H6.6L7.3 0Z" />
+      </svg>
+      <span>dAid</span>
+    </span>
+  );
+}
+
+function SectionEyebrow({ children }) {
+  return <p className="eyebrow section-eyebrow"><BrandMark />{children}</p>;
+}
+
+function HeroMap({ county, fips, k, radius, mode, hasError }) {
+  const R = county ? radius ?? county.R : 0;
+  const D = useMemo(() => county ? buildDistances(county) : null, [county]);
+  const bounds = useMemo(
+    () => county ? L.latLngBounds(county.zips.map((z) => [z.lat, z.lon])) : null,
+    [county],
+  );
+  const plan = useMemo(() => {
+    if (!county || !D) return null;
+    const atDefault = radius == null || Math.abs(radius - county.R) < 1e-9;
+    const pre = atDefault && k <= KPRE ? county.k[String(k)] : null;
+    if (pre) {
+      const robust = mode === "robust" && Array.isArray(pre.rsel);
+      return { sel: robust ? pre.rsel : pre.sel, unc: robust ? pre.runc : pre.unc };
+    }
+    const sel = getCurve(county, D, R).sel.slice(0, k);
+    const uncovered = [];
+    for (let z = 0; z < county.zips.length; z++) {
+      if (!sel.some((site) => D[site * county.zips.length + z] <= R)) uncovered.push(z);
+    }
+    return { sel, unc: uncovered };
+  }, [county, D, k, mode, radius, R]);
+
+  if (!county || !plan) {
+    return <div className="hero-map-loading" role={hasError ? "note" : "status"}>
+      {hasError ? "Map unavailable. The planner below has the service status." : "Loading county map…"}
+    </div>;
+  }
+
+  const uncovered = new Set(plan.unc);
+  const maxW = Math.max(...county.zips.map((z) => z.w), 1);
+  const centers = plan.sel.map((site, i) => ({ ...county.sites[site], n: i + 1 }));
+
+  return (
+    <figure className="hero-map-figure" aria-label={`Live planning map for ${county.name}`}>
+      <div className="hero-map-heading">
+        <span>LIVE COUNTY MAP</span>
+        <span>{county.name}</span>
+      </div>
+      <div className="hero-map">
+        <MapContainer
+          key={fips}
+          center={[county.zips[0].lat, county.zips[0].lon]}
+          zoom={8}
+          preferCanvas
+          zoomControl={false}
+          className="map"
+          scrollWheelZoom={false}
+        >
+          <TileLayer
+            url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution="&copy; OpenStreetMap contributors"
+            maxZoom={18}
+          />
+          <FitBounds bounds={bounds} />
+          {centers.map((center) => (
+            <Circle
+              key={`hero-reach-${center.n}`}
+              center={[center.lat, center.lon]}
+              radius={R * MILE_M}
+              pathOptions={{ color: "#82b49a", weight: 1, opacity: 0.48, fillColor: "#82b49a", fillOpacity: 0.055 }}
+              interactive={false}
+            />
+          ))}
+          {county.zips.map((zip, index) => {
+            const color = uncovered.has(index) ? "#db8977" : "#82b49a";
+            return (
+              <CircleMarker
+                key={`hero-zip-${zip.z}`}
+                center={[zip.lat, zip.lon]}
+                radius={2.5 + 5 * Math.sqrt(zip.w / maxW)}
+                pathOptions={{ color, weight: 1, fillColor: color, fillOpacity: 0.76 }}
+                interactive={false}
+              />
+            );
+          })}
+          {centers.map((center) => (
+            <Marker key={`hero-center-${center.n}`} position={[center.lat, center.lon]} icon={pin(center.n)} zIndexOffset={1000}>
+              <Tooltip>{center.n}. {center.name}</Tooltip>
+            </Marker>
+          ))}
+        </MapContainer>
+        <div className="hero-map-legend" aria-hidden="true">
+          <span><i className="hero-legend-covered" />Within reach</span>
+          <span><i className="hero-legend-gap" />Outside reach</span>
+          <span><i className="hero-legend-center" />Candidate center</span>
+        </div>
+      </div>
+      <figcaption><span>{k} candidate centers</span><span>{R} mi planning reach</span></figcaption>
+    </figure>
+  );
+}
+
+function PlannerDashboard({ data, error, fips, setFips, k, setK, radius, setRadius, mode, setMode }) {
   const [showAll, setShowAll] = useState(false);
-  const [mode, setMode] = useState("phased");
-  const [radius, setRadius] = useState(null);      // null = this county's default reach
   const [target, setTarget] = useState(90);
 
-  useEffect(() => {
-    fetch("/api/data")
-      .then((r) => {
-        if (!r.ok) throw new Error(`The data service returned ${r.status}.`);
-        return r.json();
-      })
-      .then((d) => {
-        setData(d);
-        const ids = Object.keys(d.counties || {});
-        setFips(ids.includes("48201") ? "48201" : ids[0] ?? null);
-      })
-      .catch((e) => setError(e.message));
-  }, []);
-
   const county = data && fips ? data.counties[fips] : null;
-  useEffect(() => setRadius(null), [fips]);               // a new county starts at its own default reach
 
   const R = county ? radius ?? county.R : 0;
   const atDefault = !county || radius == null || Math.abs(radius - county.R) < 1e-9;
@@ -395,6 +493,29 @@ function Message({ title, body }) {
 }
 
 export default function App() {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const [fips, setFips] = useState(null);
+  const [k, setK] = useState(5);
+  const [radius, setRadius] = useState(null);
+  const [mode, setMode] = useState("phased");
+
+  useEffect(() => {
+    fetch("/api/data")
+      .then((r) => {
+        if (!r.ok) throw new Error(`The data service returned ${r.status}.`);
+        return r.json();
+      })
+      .then((d) => {
+        setData(d);
+        const ids = Object.keys(d.counties || {});
+        setFips(ids.includes("48201") ? "48201" : ids[0] ?? null);
+      })
+      .catch((e) => setError(e.message));
+  }, []);
+
+  useEffect(() => setRadius(null), [fips]);
+
   useEffect(() => {
     const sections = document.querySelectorAll(".motion-reveal");
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
@@ -425,8 +546,8 @@ export default function App() {
     <div className="site-shell" id="top">
       <header className="site-header">
         <a className="brand" href="#top">
-          <span className="brand-mark" aria-hidden="true"><i /><i /><i /><i /></span>
-          <span>GridAid</span>
+          <BrandMark />
+          <BrandWord />
           <span className="brand-divider" />
           <span className="brand-context">County planning</span>
         </a>
@@ -441,60 +562,49 @@ export default function App() {
       <main className="main-content">
         <section className="page-heading motion-reveal">
           <div className="hero-copy">
-            <p className="eyebrow">COMMUNITY RESILIENCE <span>/</span> COUNTY PLANNING</p>
-            <h1>When the grid goes quiet, <em>plan for the people.</em></h1>
-            <p>GridAid helps local teams explore where backup-power centers could reach people who rely on electricity-dependent medical equipment—and where the gaps remain.</p>
+            <SectionEyebrow>COUNTY RESILIENCE</SectionEyebrow>
+            <h1>Plan for <em>power-dependent care.</em></h1>
+            <p>Explore backup-power center coverage for people who depend on electricity for medical equipment.</p>
             <div className="hero-actions">
-              <a className="button-primary" href="#planner">Explore the county planner <span aria-hidden="true">↘</span></a>
+              <a className="button-primary" href="#planner">Explore the planner <span aria-hidden="true">↘</span></a>
               <a className="button-text" href="#how-it-works">See how it works</a>
             </div>
-            <aside className="planning-note">
-              <span className="note-mark" aria-hidden="true">i</span>
-              <div>
-                <span className="note-label">A planning tool, not a promise.</span>
-                <p>Coverage is estimated from public data. It is not a guarantee of access, available power, or safety.</p>
-              </div>
-            </aside>
           </div>
-          <figure className="hero-method">
-            <img
-              src={coverageMethodIllustration}
-              alt="Illustrative map diagram: ZIP-level need, candidate centers, their estimated reach, and a coverage gap. This is not live county data."
-            />
-            <figcaption>
-              <span>ILLUSTRATIVE ONLY</span>
-              <span>A diagram of the decisions—not a county report.</span>
-            </figcaption>
-          </figure>
-        </section>
-
-        <section className="approach-band motion-reveal" aria-label="What the planner brings together">
-          <div>
-            <span className="approach-index">INPUT</span>
-            <p><b>Public health estimates</b><small>ZIP-level counts, not individual records</small></p>
-          </div>
-          <div>
-            <span className="approach-index">OUTPUT</span>
-            <p><b>A plan to question together</b><small>Candidate sites, estimated reach, and visible gaps</small></p>
-          </div>
+          <HeroMap
+            county={data && fips ? data.counties[fips] : null}
+            fips={fips}
+            k={k}
+            radius={radius}
+            mode={mode}
+            hasError={!!error}
+          />
         </section>
 
         <section id="planner" className="product-section motion-reveal">
           <div className="product-heading">
             <div>
-              <p className="eyebrow">THE LIVE PLANNING TOOL</p>
-              <h2>See the map. Test the assumptions.</h2>
+              <SectionEyebrow>THE PLANNER</SectionEyebrow>
+              <h2>Adjust the plan.</h2>
             </div>
-            <p>Every county, coverage figure, candidate site, and map below comes from the working planner—not a mockup.</p>
           </div>
-          <PlannerDashboard />
+          <PlannerDashboard
+            data={data}
+            error={error}
+            fips={fips}
+            setFips={setFips}
+            k={k}
+            setK={setK}
+            radius={radius}
+            setRadius={setRadius}
+            mode={mode}
+            setMode={setMode}
+          />
         </section>
 
         <section className="content-section motion-reveal" id="how-it-works">
           <div className="section-heading">
-            <p className="eyebrow">HOW IT WORKS</p>
-            <h2>From public data to a clearer plan.</h2>
-            <p>GridAid is designed to help local teams ask better questions before an outage—not to make decisions for them.</p>
+            <SectionEyebrow>HOW IT WORKS</SectionEyebrow>
+            <h2>From data to a plan.</h2>
           </div>
           <ol className="steps-list">
             <li>
@@ -514,8 +624,8 @@ export default function App() {
 
         <section className="audience-section motion-reveal" id="who-its-for">
           <div className="section-heading">
-            <p className="eyebrow">WHO IT'S FOR</p>
-            <h2>A shared picture for local planning.</h2>
+            <SectionEyebrow>WHO IT'S FOR</SectionEyebrow>
+            <h2>Plan together.</h2>
           </div>
           <div className="audience-list">
             <article><span>County and emergency teams</span><p>Compare center budgets and reach assumptions, then use coverage estimates to start resource-placement conversations before an outage.</p></article>
@@ -526,8 +636,8 @@ export default function App() {
         <section className="method-section motion-reveal" id="method">
           <div className="method-heading">
             <div>
-              <p className="eyebrow">DATA &amp; METHOD</p>
-              <h2>Useful estimates need local context.</h2>
+              <SectionEyebrow>DATA &amp; METHOD</SectionEyebrow>
+              <h2>Know the limits.</h2>
             </div>
             <p>Use the plan to compare options, then validate candidate sites and assumptions with local partners.</p>
           </div>
@@ -551,8 +661,8 @@ export default function App() {
 
       <footer className="site-footer">
         <div>
-          <span>GridAid</span>
-          <span>County-level backup-power planning · Aggregate data, community context</span>
+          <span className="footer-brand"><BrandMark /><BrandWord /></span>
+          <span>County planning</span>
           <a href="#top">Back to top ↑</a>
         </div>
       </footer>

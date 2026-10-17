@@ -374,9 +374,9 @@ function PlannerDashboard() {
           ))}
         </MapContainer>
 
-        <div className="legend" aria-hidden="true">
-          <span><i style={{ background: COLORS.covered }} />ZIP within reach</span>
-          <span><i style={{ background: COLORS.uncovered }} />ZIP out of reach</span>
+        <div className="legend" role="group" aria-label="Map legend">
+          <span><i style={{ background: COLORS.covered }} />Within reach</span>
+          <span><i style={{ background: COLORS.uncovered }} />Out of reach</span>
           <span><i className="sq" />Planned center</span>
         </div>
       </div>
@@ -410,8 +410,8 @@ export default function App() {
         <section className="page-heading">
           <div>
             <p className="eyebrow">GRID AID <span>/</span> COUNTY PLANNING</p>
-            <h1>Plan backup-power coverage.</h1>
-            <p>Explore where candidate centers could bring help within reach—and where the gaps remain.</p>
+            <h1>Plan for backup-power access.</h1>
+            <p>Compare candidate centers against ZIP-level estimates for people who rely on electricity-dependent medical equipment.</p>
           </div>
           <p className="planning-note"><span className="note-mark" aria-hidden="true">i</span> Estimates support planning; they do not guarantee access or safety.</p>
         </section>
@@ -419,8 +419,8 @@ export default function App() {
         <section id="planner" className="planner-section">
           <div className="planner-section-heading">
             <div>
-              <h2>Coverage plan</h2>
-              <p>Adjust planning assumptions to compare possible site locations.</p>
+              <h2>Coverage map</h2>
+              <p>ZIP-level estimates and candidate center reach.</p>
             </div>
             <p className="map-instruction">Select a ZIP or center on the map for details.</p>
           </div>

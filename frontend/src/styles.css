@@ -1002,3 +1002,11 @@ body::before {
   .hero-slogan { font-size: clamp(17px, 4.6vw, 20px); }
   .product-section { padding-top: clamp(150px, 22vh, 190px); }
 }
+
+.content-section,
+.audience-section {
+  border-bottom: 2px solid #494b44;
+}
+.method-grid {
+  border-block: 2px solid #494b44;
+}

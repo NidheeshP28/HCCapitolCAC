@@ -287,6 +287,8 @@ export default function App() {
   const [k, setK] = useState(5);
   const [radius, setRadius] = useState(null);
   const [mode, setMode] = useState("phased");
+  const [sloganTop, setSloganTop] = useState(null);
+  const [powerline, setPowerline] = useState(null);
 
   useEffect(() => {
     fetch("/api/data")
@@ -330,8 +332,141 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    const shell = document.querySelector(".site-shell");
+    const hero = document.querySelector(".hero-section");
+    const identity = document.querySelector(".hero-identity");
+    const wordmark = document.querySelector(".hero-wordmark");
+    const planner = document.querySelector(".product-section");
+    const slogan = document.querySelector(".hero-slogan");
+    const plannerHeading = document.querySelector(".product-heading");
+    if (!shell || !hero || !identity || !wordmark || !planner || !slogan || !plannerHeading) return;
+
+    let frame = 0;
+    const measure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const shellRect = shell.getBoundingClientRect();
+        const relativeRect = (element) => {
+          const rect = element.getBoundingClientRect();
+          return {
+            left: rect.left - shellRect.left,
+            top: rect.top - shellRect.top,
+            right: rect.right - shellRect.left,
+            bottom: rect.bottom - shellRect.top,
+            centerY: rect.top - shellRect.top + rect.height / 2,
+            height: rect.height,
+          };
+        };
+        const layoutRectIn = (element, container) => {
+          const rect = relativeRect(element);
+          const containerRect = relativeRect(container);
+          const matrixValues = getComputedStyle(container).transform.match(/^matrix\(([^)]+)\)$/)?.[1]
+            .split(",")
+            .map(Number);
+          const scaleX = matrixValues?.[0] || 1;
+          const scaleY = matrixValues?.[3] || 1;
+          const translateX = matrixValues?.[4] || 0;
+          const translateY = matrixValues?.[5] || 0;
+          const layoutLeft = containerRect.left - translateX - (container.offsetWidth * (1 - scaleX)) / 2;
+          const layoutTop = containerRect.top - translateY - (container.offsetHeight * (1 - scaleY)) / 2;
+          const left = layoutLeft + (rect.left - containerRect.left) / scaleX;
+          const top = layoutTop + (rect.top - containerRect.top) / scaleY;
+          return { left, top, centerY: top + rect.height / scaleY / 2 };
+        };
+        const wordmarkRect = relativeRect(wordmark);
+        const headingRect = layoutRectIn(plannerHeading, planner);
+        const plannerRect = relativeRect(planner);
+        const centerX = shell.clientWidth / 2;
+        const sloganCenter = (wordmarkRect.bottom + headingRect.top) / 2;
+        const plannerTransform = getComputedStyle(planner).transform;
+        const plannerScale = plannerTransform.startsWith("matrix(")
+          ? Number(plannerTransform.slice(7).split(",")[0])
+          : 1;
+
+        setSloganTop((sloganCenter - plannerRect.top) / plannerScale);
+        const points = [
+          { id: "planner", x: headingRect.left, y: headingRect.centerY },
+          ...[
+            [".content-section", ".section-heading"],
+            [".audience-section", ".section-heading"],
+            [".method-section", ".method-heading"],
+          ].flatMap(([sectionSelector, headingSelector], index) => {
+            const section = document.querySelector(sectionSelector);
+            const heading = section?.querySelector(headingSelector);
+            if (!section || !heading) return [];
+            const rect = layoutRectIn(heading, section);
+            return [{ id: `section-${index}`, x: rect.left, y: rect.centerY }];
+          }),
+        ];
+        const lineEnd = shell.scrollHeight - 12;
+        const path = `M ${centerX} ${wordmarkRect.bottom} V ${lineEnd}`;
+        const branches = points
+          .map(({ x, y }) => `M ${centerX} ${y - 12} H ${x} V ${y + 12} H ${centerX}`)
+          .join(" ");
+        const nodes = [
+          { id: "start", x: centerX, y: wordmarkRect.bottom },
+          { id: "end", x: centerX, y: lineEnd },
+          ...points.map(({ id, x, y }) => ({ id, x, y })),
+        ];
+        const lineLength = lineEnd - wordmarkRect.bottom;
+        setPowerline({
+          width: shell.clientWidth,
+          height: shell.scrollHeight,
+          path,
+          branches,
+          nodes,
+          lineLength,
+        });
+      });
+    };
+
+    const observer = new ResizeObserver(measure);
+    [
+      shell,
+      hero,
+      wordmark,
+      planner,
+      slogan,
+      plannerHeading,
+      ...document.querySelectorAll(".content-section .section-heading, .audience-section .section-heading, .method-section .method-heading"),
+    ].forEach((element) => observer.observe(element));
+    const revealSections = [...document.querySelectorAll(".motion-reveal")];
+    window.addEventListener("resize", measure);
+    revealSections.forEach((section) => section.addEventListener("transitionend", measure));
+    identity.addEventListener("transitionend", measure);
+    measure();
+    const revealFrame = requestAnimationFrame(() => requestAnimationFrame(measure));
+    const revealTimer = window.setTimeout(measure, 1100);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+      revealSections.forEach((section) => section.removeEventListener("transitionend", measure));
+      identity.removeEventListener("transitionend", measure);
+      cancelAnimationFrame(frame);
+      cancelAnimationFrame(revealFrame);
+      window.clearTimeout(revealTimer);
+    };
+  }, []);
+
   return (
     <div className="site-shell" id="top">
+      {powerline && (
+        <svg
+          className="powerline-trace"
+          viewBox={`0 0 ${powerline.width} ${powerline.height}`}
+          preserveAspectRatio="none"
+          aria-hidden="true"
+          style={{ "--line-travel": `${-powerline.lineLength}px` }}
+        >
+          <path className="powerline-base" d={powerline.path} />
+          <path className="powerline-base powerline-branches" d={powerline.branches} />
+          <path className="powerline-energy" d={powerline.path} />
+          {powerline.nodes.map((node) => (
+            <circle key={node.id} className="powerline-node" cx={node.x} cy={node.y} r="3" />
+          ))}
+        </svg>
+      )}
       <main className="main-content">
         <section className="page-heading hero-section motion-reveal" aria-label="GridAid">
           <div className="hero-identity">
@@ -340,7 +475,9 @@ export default function App() {
         </section>
 
         <section id="planner" className="product-section motion-reveal">
-          <p className="hero-slogan">Backup power, placed where it is needed the most.</p>
+          <p className="hero-slogan" style={sloganTop == null ? undefined : { top: sloganTop }}>
+            Backup power, placed where it is needed the most.
+          </p>
           <div className="product-heading">
             <div>
               <SectionEyebrow>THE PLANNER</SectionEyebrow>
@@ -419,13 +556,6 @@ export default function App() {
         </section>
       </main>
 
-      <footer className="site-footer">
-        <div>
-          <span className="footer-brand"><BrandMark /><BrandWord /></span>
-          <span>County planning</span>
-          <a href="#top">Back to top ↑</a>
-        </div>
-      </footer>
     </div>
   );
 }

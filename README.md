@@ -22,7 +22,7 @@ Built for the Congressional App Challenge.
 2. GridAid loads **ZIP-level counts** of Medicare beneficiaries who rely on electricity-dependent medical equipment (HHS emPOWER).
 3. It loads **candidate sites** (libraries, schools, community centers, fire stations) from OpenStreetMap or public facility datasets.
 4. A **maximum coverage optimizer** chooses the *N* sites that put the most people within a chosen radius.
-5. The map shows the chosen sites, the covered and uncovered ZIPs, and a live **coverage meter** that updates as you move the slider.
+5. The map draws every ZIP as its real boundary (Census ZCTA polygons), so shapes stay put at any zoom. One blue hue, light to dark, shows how many people on equipment live in the ZIP; red hatching marks a ZIP no planned center reaches. Hover a ZIP for its count, area, and nearest center.
 
 ## The algorithm
 
@@ -35,9 +35,11 @@ Choosing *N* sites to cover the most people is the **maximum coverage problem**,
 ## Data sources
 
 | Data | Source |
+|---|---|
 | People dependent on electricity-powered medical equipment, by ZIP | [HHS emPOWER](https://empowermap.hhs.gov/) public REST service and the emPOWER dataset on [data.gov](https://data.gov) |
 | Candidate sites (libraries, schools, community centers, fire stations) | [OpenStreetMap](https://www.openstreetmap.org/) or public facility datasets |
-| County and ZIP boundaries | US Census Bureau |
+| ZIP boundaries (map polygons) | US Census Bureau 2020 ZCTA cartographic file, cut per county by `scripts/make_zip_shapes.py` |
+| Street basemap | Esri World Light Gray Canvas (optional; the map works without it) |
 
 All data is public. If the API is unavailable, the app falls back to the downloadable dataset.
 
@@ -59,26 +61,36 @@ GridAid uses **only aggregate, de-identified data**. It never attempts to identi
 ## Getting started
 
 ```bash
-git clone https://github.com/<your-org>/gridaid.git
-cd gridaid
-pip install -r requirements.txt
-python scripts/load_data.py --county "Harris County, TX"
-python app.py
+# 1. the API: serves backend/data.json (precomputed plans for every county)
+cd backend && pip install -r requirements.txt && uvicorn main:app --port 8000
+
+# 2. the front end (proxies /api to :8000)
+cd frontend && npm install && npm run dev
 ```
 
-Then open the local address shown in your terminal, choose a county, and drag the slider.
+Open the address Vite prints, scroll to open the map, pick a county, and drag the sliders. The link in the address bar (`#c=48201&k=5&r=10`) reproduces the current plan.
 
-*(Adjust commands to match your actual project structure before submitting.)*
+### Rebuilding the data
+
+```bash
+pip install -r scripts/requirements.txt
+python scripts/fetch_empower.py          # emPOWER counts by ZIP
+python scripts/make_zcta.py --all        # split into counties
+python scripts/fetch_sites.py            # candidate sites from OpenStreetMap
+python scripts/build.py                  # greedy + exact solve -> backend/data.json
+python scripts/make_zip_shapes.py path/to/cb_2020_us_zcta520_500k.shp   # ZIP polygons -> frontend/public/zips/
+```
+
+The Census file is <https://www2.census.gov/geo/tiger/GENZ2020/shp/cb_2020_us_zcta520_500k.zip>; unzip it outside the repo.
 
 ## Project structure
 
 ```
-gridaid/
-├── data/          # downloaded and cached emPOWER + facility data
-├── optimizer/     # greedy and integer-programming solvers
-├── app/           # front end: map, county picker, N slider, coverage meter
-├── notebooks/     # greedy vs. optimal comparison
-└── README.md
+gridaid-app/
+├── backend/      # FastAPI: serves data.json (and the built front end in production)
+├── frontend/     # React + Vite + Leaflet + GSAP; public/zips/<fips>.json are the ZIP polygons
+├── scripts/      # data pipeline: emPOWER, sites, greedy + exact optimizer, ZIP shapes
+└── data/         # raw and intermediate files (not deployed)
 ```
 
 ## Roadmap

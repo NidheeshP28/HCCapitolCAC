@@ -45,9 +45,9 @@ function BrandMark() {
   );
 }
 
-function BrandWord() {
+function BrandWord({ className = "" }) {
   return (
-    <span className="brand-word" aria-label="GridAid">
+    <span className={`brand-word ${className}`.trim()} aria-label="GridAid">
       <span>Gr</span>
       <svg className="brand-word-bolt" viewBox="0 0 12 16" focusable="false" aria-hidden="true">
         <path d="M7.3 0 1.8 8h3.6L4.7 16l5.5-8H6.6L7.3 0Z" />
@@ -59,99 +59,6 @@ function BrandWord() {
 
 function SectionEyebrow({ children }) {
   return <p className="eyebrow section-eyebrow"><BrandMark />{children}</p>;
-}
-
-function HeroMap({ county, fips, k, radius, mode, hasError }) {
-  const R = county ? radius ?? county.R : 0;
-  const D = useMemo(() => county ? buildDistances(county) : null, [county]);
-  const bounds = useMemo(
-    () => county ? L.latLngBounds(county.zips.map((z) => [z.lat, z.lon])) : null,
-    [county],
-  );
-  const plan = useMemo(() => {
-    if (!county || !D) return null;
-    const atDefault = radius == null || Math.abs(radius - county.R) < 1e-9;
-    const pre = atDefault && k <= KPRE ? county.k[String(k)] : null;
-    if (pre) {
-      const robust = mode === "robust" && Array.isArray(pre.rsel);
-      return { sel: robust ? pre.rsel : pre.sel, unc: robust ? pre.runc : pre.unc };
-    }
-    const sel = getCurve(county, D, R).sel.slice(0, k);
-    const uncovered = [];
-    for (let z = 0; z < county.zips.length; z++) {
-      if (!sel.some((site) => D[site * county.zips.length + z] <= R)) uncovered.push(z);
-    }
-    return { sel, unc: uncovered };
-  }, [county, D, k, mode, radius, R]);
-
-  if (!county || !plan) {
-    return <div className="hero-map-loading" role={hasError ? "note" : "status"}>
-      {hasError ? "Map unavailable. The planner below has the service status." : "Loading county map…"}
-    </div>;
-  }
-
-  const uncovered = new Set(plan.unc);
-  const maxW = Math.max(...county.zips.map((z) => z.w), 1);
-  const centers = plan.sel.map((site, i) => ({ ...county.sites[site], n: i + 1 }));
-
-  return (
-    <figure className="hero-map-figure" aria-label={`Live planning map for ${county.name}`}>
-      <div className="hero-map-heading">
-        <span>LIVE COUNTY MAP</span>
-        <span>{county.name}</span>
-      </div>
-      <div className="hero-map">
-        <MapContainer
-          key={fips}
-          center={[county.zips[0].lat, county.zips[0].lon]}
-          zoom={8}
-          preferCanvas
-          zoomControl={false}
-          className="map"
-          scrollWheelZoom={false}
-        >
-          <TileLayer
-            url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; OpenStreetMap contributors"
-            maxZoom={18}
-          />
-          <FitBounds bounds={bounds} />
-          {centers.map((center) => (
-            <Circle
-              key={`hero-reach-${center.n}`}
-              center={[center.lat, center.lon]}
-              radius={R * MILE_M}
-              pathOptions={{ color: "#82b49a", weight: 1, opacity: 0.48, fillColor: "#82b49a", fillOpacity: 0.055 }}
-              interactive={false}
-            />
-          ))}
-          {county.zips.map((zip, index) => {
-            const color = uncovered.has(index) ? "#db8977" : "#82b49a";
-            return (
-              <CircleMarker
-                key={`hero-zip-${zip.z}`}
-                center={[zip.lat, zip.lon]}
-                radius={2.5 + 5 * Math.sqrt(zip.w / maxW)}
-                pathOptions={{ color, weight: 1, fillColor: color, fillOpacity: 0.76 }}
-                interactive={false}
-              />
-            );
-          })}
-          {centers.map((center) => (
-            <Marker key={`hero-center-${center.n}`} position={[center.lat, center.lon]} icon={pin(center.n)} zIndexOffset={1000}>
-              <Tooltip>{center.n}. {center.name}</Tooltip>
-            </Marker>
-          ))}
-        </MapContainer>
-        <div className="hero-map-legend" aria-hidden="true">
-          <span><i className="hero-legend-covered" />Within reach</span>
-          <span><i className="hero-legend-gap" />Outside reach</span>
-          <span><i className="hero-legend-center" />Candidate center</span>
-        </div>
-      </div>
-      <figcaption><span>{k} candidate centers</span><span>{R} mi planning reach</span></figcaption>
-    </figure>
-  );
 }
 
 function PlannerDashboard({ data, error, fips, setFips, k, setK, radius, setRadius, mode, setMode }) {
@@ -560,24 +467,9 @@ export default function App() {
       </header>
 
       <main className="main-content">
-        <section className="page-heading motion-reveal">
-          <div className="hero-copy">
-            <SectionEyebrow>COUNTY RESILIENCE</SectionEyebrow>
-            <h1>Plan for <em>power-dependent care.</em></h1>
-            <p>Explore backup-power center coverage for people who depend on electricity for medical equipment.</p>
-            <div className="hero-actions">
-              <a className="button-primary" href="#planner">Explore the planner <span aria-hidden="true">↘</span></a>
-              <a className="button-text" href="#how-it-works">See how it works</a>
-            </div>
-          </div>
-          <HeroMap
-            county={data && fips ? data.counties[fips] : null}
-            fips={fips}
-            k={k}
-            radius={radius}
-            mode={mode}
-            hasError={!!error}
-          />
+        <section className="page-heading hero-section motion-reveal" aria-label="GridAid">
+          <h1 className="hero-wordmark"><BrandWord className="hero-wordmark-type" /></h1>
+          <p className="hero-slogan">Plan power. Protect care.</p>
         </section>
 
         <section id="planner" className="product-section motion-reveal">

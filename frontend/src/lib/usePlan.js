@@ -1,6 +1,5 @@
 import { useMemo } from "react";
-import { buildDistances, evaluatePlan, getCurve, minCenters, minReach } from "./plan.js";
-import { useDebounced } from "./hooks.js";
+import { buildDistances, evaluatePlan, getCurve, minCenters } from "./plan.js";
 
 export const KMIN = 3;
 export const KMAX = 25;        // plans for more than KPRE centers are computed live in the browser
@@ -70,16 +69,7 @@ export function usePlan({ data, fips, k, radius, mode }) {
     };
   }, [county, D, pre, robust, livePlan]);
 
-  // "budget needed" and "reach needed" are many greedy runs; wait for the slider to settle before computing them
-  const kSettled = useDebounced(k, 140);
-  const needs = useMemo(() => {
-    if (!county || !D || !curve) return null;
-    return TARGETS.map((t) => ({
-      target: t,
-      centers: minCenters(curve, t),
-      reach: minReach(county, D, kSettled, t),
-    }));
-  }, [county, D, curve, kSettled]);
+  const needs = useMemo(() => (curve ? TARGETS.map((t) => ({ target: t, centers: minCenters(curve, t) })) : null), [curve]);
 
   return { county, R, atDefault, pre, live, D, curve, plan, countyHasRobust, hasRobust, robust, needs };
 }

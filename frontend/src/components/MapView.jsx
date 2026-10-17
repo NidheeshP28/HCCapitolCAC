@@ -19,11 +19,10 @@ const pinIcon = (n) =>
 
 export default function MapView() {
   const P = usePlanner();
-  const { county, plan, R, scale, basemap, showSites, activeZip, zipIndex, hoverCenter, focusReq, shapeError } = P;
+  const { county, plan, R, scale, activeZip, zipIndex, hoverCenter, focusReq, shapeError } = P;
   const shapes = P.shapes ?? (shapeError ? NO_SHAPES : null);
 
   const elRef = useRef(null);
-  const readoutRef = useRef(null);
   const hintRef = useRef(null);
   const S = useRef({ pins: new Map(), rings: new Map(), items: [], fitted: null });
   const cb = useRef(P);
@@ -41,8 +40,8 @@ export default function MapView() {
       minZoom: 3,
       maxZoom: 17,
     }).setView([39, -98], 4);
-    ["sites", "zips", "gaps", "labels", "rings", "focus"].forEach((name, i) => {
-      map.createPane(name).style.zIndex = String(405 + i * 10);
+    ["zips", "gaps", "labels", "rings", "focus"].forEach((name, i) => {
+      map.createPane(name).style.zIndex = String(410 + i * 10);
     });
     L.tileLayer(TILES, { maxNativeZoom: 16, maxZoom: 19, className: "ga-tiles" }).addTo(map);
     L.tileLayer(LABELS, { maxNativeZoom: 16, maxZoom: 19, pane: "labels", className: "ga-labels" }).addTo(map);
@@ -55,7 +54,6 @@ export default function MapView() {
       ringLayer: L.layerGroup().addTo(map),
       pinLayer: L.layerGroup().addTo(map),
       focusLayer: L.layerGroup().addTo(map),
-      siteLayer: L.layerGroup().addTo(map),
     });
 
     // The page scrolls, so the wheel scrolls the page; hold Ctrl/Cmd (or pinch) to zoom the map.
@@ -73,18 +71,6 @@ export default function MapView() {
     };
     el.addEventListener("wheel", onWheel, { passive: false });
 
-    let raf = 0;
-    map.on("mousemove", (e) => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        if (readoutRef.current)
-          readoutRef.current.textContent = `${Math.abs(e.latlng.lat).toFixed(4)}°${e.latlng.lat >= 0 ? "N" : "S"}  ${Math.abs(e.latlng.lng).toFixed(4)}°${e.latlng.lng >= 0 ? "E" : "W"}`;
-      });
-    });
-    map.on("mouseout", () => {
-      if (readoutRef.current) readoutRef.current.textContent = "—";
-    });
-
     const ro = new ResizeObserver(() => {
       map.invalidateSize({ animate: false });
       const s = S.current;
@@ -96,7 +82,6 @@ export default function MapView() {
 
     return () => {
       ro.disconnect();
-      cancelAnimationFrame(raf);
       clearTimeout(hintTimer);
       el.removeEventListener("wheel", onWheel);
       map.remove();
@@ -225,18 +210,6 @@ export default function MapView() {
     }
   }, [hoverCenter, plan]);
 
-  // ---- every candidate site, on request ----
-  useEffect(() => {
-    const s = S.current;
-    if (!s.map || !county) return;
-    s.siteLayer.clearLayers();
-    if (!showSites) return;
-    const r = L.canvas({ pane: "sites", padding: 0.3 });
-    county.sites.forEach((c) =>
-      s.siteLayer.addLayer(L.circleMarker([c.lat, c.lon], { renderer: r, interactive: false, radius: 2.4, stroke: false, fillColor: INK, fillOpacity: 0.42 }))
-    );
-  }, [county, showSites]);
-
   // ---- the ZIP under the cursor or pinned: outline, a line to its nearest center, and the distance ----
   useEffect(() => {
     const s = S.current;
@@ -270,36 +243,22 @@ export default function MapView() {
 
   const zoom = (d) => S.current.map?.setZoom(S.current.map.getZoom() + d);
   const fit = () => S.current.bounds && S.current.map.flyToBounds(S.current.bounds, { padding: [30, 30], duration: 0.8 });
-  const copyLink = async (ev) => {
-    const btn = ev.currentTarget;
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      btn.dataset.done = "1";
-      setTimeout(() => delete btn.dataset.done, 1400);
-    } catch { /* clipboard blocked: the address bar already holds the link */ }
-  };
-
   return (
-    <section className={`card map-card${basemap ? "" : " no-basemap"}`} data-map-cell aria-label="Map of ZIP codes, planned centers and reach">
+    <section className="card map-card" data-map-cell aria-label="Map of ZIP codes, planned centers and reach">
       <div ref={elRef} className="map" />
       <div className="map-tag">
-        <i>Fig.</i>
         <b>{county ? county.name : "Loading…"}</b>
-        <span>{county ? `${county.zips.length} ZIPs · ${fmt(county.total)} people` : ""}</span>
+        <span>{county ? `${county.zips.length} ZIPs` : ""}</span>
       </div>
       <div className="map-ctl">
         <button type="button" onClick={() => zoom(0.5)} aria-label="Zoom in">+</button>
         <button type="button" onClick={() => zoom(-0.5)} aria-label="Zoom out">−</button>
         <button type="button" onClick={fit} aria-label="Fit the county" title="Fit the county">◎</button>
-        <button type="button" className="copy" onClick={copyLink} aria-label="Copy a link to this plan" title="Copy a link to this plan">
-          <span>Link</span>
-        </button>
       </div>
       <div ref={hintRef} className="map-hint">Hold <kbd>⌘</kbd>/<kbd>Ctrl</kbd> and scroll to zoom</div>
       {!shapes && !shapeError && <div className="map-wait">Drawing ZIP boundaries…</div>}
       {shapeError && <div className="map-wait warn">Boundaries unavailable. Showing ZIP points.</div>}
       <div className="map-foot">
-        <span ref={readoutRef} className="map-readout">—</span>
         <span className="map-attr">
           ZIP boundaries: US Census ZCTA · Basemap © Esri, HERE, Garmin, <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors
         </span>

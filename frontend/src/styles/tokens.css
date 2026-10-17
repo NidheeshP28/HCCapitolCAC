@@ -24,9 +24,10 @@
 
   --f-display: "Archivo Variable", "Archivo", "Arial Narrow", system-ui, sans-serif;
   --f-body: "Public Sans Variable", "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-logo: "Oxanium Variable", "Oxanium", "Arial Narrow", sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  --gutter: 8px;
-  --g: 4px;
+  --gutter: 10px;
+  --g: 6px;
   --r: 3px;
 }

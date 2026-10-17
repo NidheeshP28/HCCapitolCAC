@@ -29,8 +29,6 @@ export function PlannerProvider({ children }) {
   const [radius, setRadius] = useState(init.current.r);
   const [mode, setMode] = useState(init.current.m ?? "phased");
   const [shade, setShade] = useState("people");
-  const [basemap, setBasemap] = useState(true);
-  const [showSites, setShowSites] = useState(false);
   const [hoverZip, setHoverZip] = useState(null);
   const [pinZip, setPinZip] = useState(null);
   const [hoverCenter, setHoverCenter] = useState(null);
@@ -118,7 +116,7 @@ export function PlannerProvider({ children }) {
 
   const value = {
     data, error, fips, setFips, k, setK, radius, setRadius, mode, setMode,
-    shade, setShade, basemap, setBasemap, showSites, setShowSites,
+    shade, setShade,
     hoverZip, setHoverZip, pinZip, setPinZip, hoverCenter, setHoverCenter,
     activeZip: hoverZip ?? pinZip,
     shapes: shapesNow, shapeError, scale, zipIndex, zipDirectory, totals,

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 export const PIN_QUERY = "(min-width: 1180px) and (min-height: 680px) and (prefers-reduced-motion: no-preference)";
 
@@ -17,15 +17,6 @@ function useMedia(query) {
 // "pin": the hero pins and the map expands as you scroll. "flow": everything is laid out plainly (small screens, reduced motion).
 export const useMotionMode = () => (useMedia(PIN_QUERY) ? "pin" : "flow");
 export const useReducedMotion = () => useMedia("(prefers-reduced-motion: reduce)");
-
-export function useDebounced(value, ms) {
-  const [v, setV] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setV(value), ms);
-    return () => clearTimeout(t);
-  }, [value, ms]);
-  return v;
-}
 
 export function useSize() {
   const ref = useRef(null);

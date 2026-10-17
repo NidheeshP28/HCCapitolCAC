@@ -14,14 +14,6 @@ const SOURCES = [
   ["OpenStreetMap", "Libraries, schools, community centers, and fire stations as candidate sites.", "https://www.openstreetmap.org/copyright"],
   ["Esri, Leaflet", "The quiet street basemap and the map library. Everything else works without them.", "https://leafletjs.com/"],
 ];
-const PIPE = [
-  ["fetch_empower.py", "emPOWER counts by ZIP"],
-  ["fetch_sites.py", "candidate sites"],
-  ["make_zcta.py", "split by county"],
-  ["build.py", "greedy plus exact solve"],
-  ["make_zip_shapes.py", "ZIP polygons"],
-];
-
 export default function DataSection() {
   const ref = useRef(null);
   const { totals } = usePlanner();
@@ -50,7 +42,7 @@ export default function DataSection() {
       <SectionHead n="04" title="Data and method" />
       <div className="data-grid">
         <article className="card rv data-opt">
-          <header className="card-h"><span className="card-i">A</span><h3>Greedy against the proven optimum</h3><span className="card-aside">exact solve</span></header>
+          <header className="card-h"><h3>Greedy against the proven optimum</h3><span className="card-aside">exact solve</span></header>
           {hist ? (
             <>
               <div className="opt-stats">
@@ -68,20 +60,20 @@ export default function DataSection() {
               <div className="hist-ax"><span>90%</span><span>95%</span><span>100% of optimum</span></div>
             </>
           ) : <p className="empty">Loading…</p>}
-          <p className="foot">Each bar counts county-and-budget plans (3 to 10 centers); bar height is the square root of the count, so the thin tail stays visible. The textbook guarantee for greedy is 63% (1 − 1/e); in practice it lands far above it, and these are solved exactly with integer programming to check.</p>
+          <p className="foot">Each bar counts one county at one budget (3 to 10 centers); height is the square root of the count. The textbook guarantee for greedy is 63%.</p>
         </article>
 
         <article className="card rv">
-          <header className="card-h"><span className="card-i">B</span><h3>Two ways to place</h3></header>
+          <header className="card-h"><h3>Two ways to place</h3></header>
           <dl className="two">
             <div><dt>Phased</dt><dd>Greedy. Each new center is the one adding the most people not yet covered, and centers already placed never move. Right when funding arrives in stages.</dd></div>
             <div><dt>Robust</dt><dd>Solved exactly for the best average coverage when reach is 20% shorter, as given, and 20% longer. It gives up a little on paper to hold up when assumptions are wrong. Centers can move as the budget changes.</dd></div>
           </dl>
-          <p className="foot">“Expected” coverage also jitters each ZIP’s point by about a third of the distance to its nearest neighbor and averages 200 draws.</p>
+          
         </article>
 
         <article className="card rv">
-          <header className="card-h"><span className="card-i">C</span><h3>Sources</h3></header>
+          <header className="card-h"><h3>Sources</h3></header>
           <ul className="src">
             {SOURCES.map(([n, d, h]) => (
               <li key={n}><a href={h} target="_blank" rel="noreferrer">{n} ↗</a><span>{d}</span></li>
@@ -89,15 +81,6 @@ export default function DataSection() {
           </ul>
         </article>
 
-        <article className="card rv">
-          <header className="card-h"><span className="card-i">D</span><h3>Rebuild it</h3><span className="card-aside">scripts/</span></header>
-          <ol className="pipe">
-            {PIPE.map(([f, d], i) => (
-              <li key={f}><b>{i + 1}</b><code>{f}</code><span>{d}</span></li>
-            ))}
-          </ol>
-          <p className="foot">Everything is precomputed into one JSON file plus one small boundary file per county. The page needs no account and stores nothing about you.</p>
-        </article>
       </div>
     </section>
   );

@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { usePlanner } from "../../state/PlannerContext.jsx";
 import { KMAX, KMIN, TARGETS } from "../../lib/usePlan.js";
-import { fmt1, miles } from "../../lib/format.js";
+import { fmt1 } from "../../lib/format.js";
 import { useSize } from "../../lib/hooks.js";
 import Card from "../ui/Card.jsx";
 
-const M = { l: 28, r: 8, t: 8, b: 18 };
+const M = { l: 26, r: 6, t: 8, b: 18 };
 
 function Chart() {
   const { curve, k, setK } = usePlanner();
@@ -21,8 +21,8 @@ function Chart() {
   const line = pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join("");
   const area = pts.length ? `${line}L${X(pts.length).toFixed(1)} ${Y(0)}L${X(1).toFixed(1)} ${Y(0)}Z` : "";
   const xt = [];
-  const stride = xmax > 24 ? 5 : xmax > 12 ? 2 : 1;
-  for (let n = 1; n <= xmax; n++) if (n === 1 || n % stride === 0) xt.push(n);
+  const stride = xmax > 24 ? 10 : 5;
+  for (let n = stride; n <= xmax; n += stride) xt.push(n);
 
   const at = (e) => {
     const r = ref.current.getBoundingClientRect();
@@ -42,19 +42,16 @@ function Chart() {
           onPointerLeave={() => setHov(null)}
           onClick={(e) => setK(Math.max(KMIN, Math.min(KMAX, at(e))))}
         >
-          {[0, 25, 50, 75, 100].map((v) => (
+          {[0, 50, 100].map((v) => (
             <g key={v}>
               <line x1={M.l} x2={w - M.r} y1={Y(v)} y2={Y(v)} className="gl" />
               <text x={M.l - 5} y={Y(v) + 3} className="ax" textAnchor="end">{v}</text>
             </g>
           ))}
-          {TARGETS.map((t) => (
-            <line key={t} x1={M.l} x2={w - M.r} y1={Y(t)} y2={Y(t)} className="tg" />
-          ))}
           <path d={area} className="ar" />
           <path d={line} className="ln" />
           {xt.map((n) => (
-            <text key={n} x={X(n)} y={h - 5} className="ax" textAnchor="middle">{n}</text>
+            <text key={n} x={X(n)} y={h - 4} className="ax" textAnchor="middle">{n}</text>
           ))}
           {hov != null && cum[hov - 1] != null && (
             <g className="hv">
@@ -78,59 +75,20 @@ function Chart() {
 }
 
 export function CurveCard() {
-  const { needs, R, k } = usePlanner();
+  const { needs, R } = usePlanner();
   return (
-    <Card id="07" title="Reach vs. budget" aside="greedy · click to set" dock="bottom" className="c-curve">
+    <Card title="Centers vs. coverage" aside="click to set" dock="bottom" className="c-curve">
       <div className="curve">
         <Chart />
-        <table className="need">
-          <caption>To cover…</caption>
-          <thead>
-            <tr><th></th><th>at {R} mi</th><th>with {k}</th></tr>
-          </thead>
-          <tbody>
-            {(needs ?? TARGETS.map((t) => ({ target: t }))).map((n) => (
-              <tr key={n.target}>
-                <th>{n.target}%</th>
-                <td>{needs ? (n.centers == null ? "40+" : <><b>{n.centers}</b> ctr</>) : "…"}</td>
-                <td>{needs ? (n.reach == null ? "—" : <><b>{miles(n.reach)}</b> mi</>) : "…"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <p className="need-note">Reach is a standard to meet, not a dial to tune.</p>
+        <dl className="need" aria-label={`Centers needed at ${R} miles`}>
+          {(needs ?? TARGETS.map((t) => ({ target: t }))).map((n) => (
+            <div key={n.target}>
+              <dt>{n.target}%</dt>
+              <dd>{needs ? (n.centers == null ? "40+" : n.centers) : "…"}<small> centers</small></dd>
+            </div>
+          ))}
+        </dl>
       </div>
-    </Card>
-  );
-}
-
-export function CheckCard() {
-  const { plan, county } = usePlanner();
-  if (!plan) return <Card id="08" title="Plan check" dock="bottom" className="c-check" />;
-  return (
-    <Card id="08" title="Plan check" aside={plan.source === "live" ? "live estimate" : plan.source} dock="bottom" className="c-check">
-      <dl className="stats">
-        <div>
-          <dt>Expected</dt>
-          <dd>{plan.exp.toFixed(0)}<small>%</small></dd>
-          <p>if ZIP points are off a bit</p>
-        </div>
-        <div>
-          <dt>Range</dt>
-          <dd>{plan.lo.toFixed(0)}–{plan.hi.toFixed(0)}<small>%</small></dd>
-          <p>reach 20% shorter / longer</p>
-        </div>
-        <div>
-          <dt>Best possible</dt>
-          <dd>{plan.opt != null ? <>{plan.opt.toFixed(1)}<small>%</small></> : "n/a"}</dd>
-          <p>{plan.opt != null ? `this plan gets ${plan.ratio.toFixed(1)}% of it` : "solved exactly for preset plans only"}</p>
-        </div>
-        <div>
-          <dt>Backed up</dt>
-          <dd>{plan.red.toFixed(0)}<small>%</small></dd>
-          <p>reached by 2+ centers</p>
-        </div>
-      </dl>
     </Card>
   );
 }

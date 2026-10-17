@@ -117,7 +117,7 @@ export default function Walkthrough() {
       <SectionHead n="02" title="How a plan is made" kicker={county ? `Replaying ${county.name} at ${R} mi, the plan open above.` : undefined} />
       <div className="wt-stage">
         <div className="wt-text card">
-          <header className="card-h"><span className="card-i">Step</span><h3>{step} of {N || "–"}</h3></header>
+          <header className="card-h"><h3>Step {step} of {N || "–"}</h3></header>
           <h3 className="wt-h" key={step}>{head[0]}</h3>
           <p className="wt-p" key={`p${step}`}>{head[1]}</p>
           <div className="wt-cov">
@@ -133,11 +133,7 @@ export default function Walkthrough() {
               </li>
             ))}
           </ol>
-          <div className="wt-key">
-            <p><i className="k-hatch" /> A ZIP no center reaches yet</p>
-            <p><i className="k-shade" /> Darker blue: more people on power-dependent equipment</p>
-            <p className="foot">The rule: add the site that brings the most not-yet-covered people within reach. {k > N ? `Your plan has ${k} centers; this replay shows the first ${N}.` : ""}</p>
-          </div>
+          {k > N && <p className="foot">Your plan has {k} centers; this replay shows the first {N}.</p>}
         </div>
 
         <figure className="wt-fig card">

@@ -17,15 +17,15 @@ export default function Why() {
       </ScrollReveal>
       <div className="why-cards">
         <article className="card rv">
-          <header className="card-h"><span className="card-i">A</span><h3>Winter Storm Uri</h3><span className="card-aside">February 2021</span></header>
+          <header className="card-h"><h3>Winter Storm Uri</h3><span className="card-aside">February 2021</span></header>
           <p>Texas lost power for days in freezing weather. People who depend on electricity-powered medical equipment had very little margin, and few places to go.</p>
         </article>
         <article className="card rv">
-          <header className="card-h"><span className="card-i">B</span><h3>Hurricane Beryl</h3><span className="card-aside">July 2024</span></header>
+          <header className="card-h"><h3>Hurricane Beryl</h3><span className="card-aside">July 2024</span></header>
           <p>Outages across the Houston area ran for days in summer heat. Charging an oxygen concentrator or powering a lift depends on a place with working electricity within reach.</p>
         </article>
         <article className="card rv why-data">
-          <header className="card-h"><span className="card-i">C</span><h3>What the public data gives us</h3><span className="card-aside">HHS emPOWER</span></header>
+          <header className="card-h"><h3>What the public data gives us</h3><span className="card-aside">HHS emPOWER</span></header>
           <p>De-identified counts, by ZIP, of Medicare beneficiaries who use electricity-powered medical equipment. Here that is</p>
           <div className="big-n">
             <Num value={totals?.people ?? 0} className="big-num" />

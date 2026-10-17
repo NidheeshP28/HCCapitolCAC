@@ -1,9 +1,7 @@
 const ITEMS = [
   ["Planning support", "not a safety guarantee"],
   ["Straight line", "not travel time"],
-  ["ZIP points", "not addresses"],
   ["Medicare enrollees", "only"],
-  ["Aggregate counts", "no individuals"],
 ];
 
 export default function Strip() {

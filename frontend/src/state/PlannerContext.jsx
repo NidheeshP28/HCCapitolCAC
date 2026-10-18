@@ -104,7 +104,9 @@ export function PlannerProvider({ children }) {
   useEffect(() => {
     if (!fips) return;
     const t = setTimeout(() => {
-      const hash = `#c=${fips}`;
+      const p = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      p.set("c", fips);                                  // keep any other keys (the page) in place
+      const hash = `#${p.toString()}`;
       if (hash !== window.location.hash) window.history.replaceState(null, "", hash);
     }, 250);
     return () => clearTimeout(t);

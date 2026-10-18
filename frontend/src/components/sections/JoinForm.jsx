@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { sendForm } from "../../lib/forms.js";
 
 const TYPES = ["Library", "School", "Community center", "Fire station", "Place of worship", "Other"];
 const GETS = [
@@ -22,17 +23,19 @@ function Choice({ name, options, value, onChange }) {
   );
 }
 
-// A scaffold: it checks the form and says so, but nothing is sent anywhere yet.
+// Sends to Formspree when VITE_FORMSPREE_JOIN is set (lib/forms.js); otherwise it checks the form and says nothing was sent.
 export default function JoinForm() {
   const [f, setF] = useState({ gen: "", access: "" });
   const [state, setState] = useState(null);
   const set = (k) => (e) => setF((x) => ({ ...x, [k]: e?.target ? e.target.value : e }));
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     const form = e.currentTarget;
     if (!form.checkValidity()) { form.reportValidity(); return; }
-    setState("done");
+    setState("sending");
+    const r = await sendForm("join", Object.fromEntries(new FormData(form)));
+    setState(r.ok ? "sent" : r.reason === "not-configured" ? "done" : "error");
   };
 
   return (
@@ -49,15 +52,15 @@ export default function JoinForm() {
         <ul className="join-other">{OTHER.map((o) => <li key={o}>{o}</li>)}</ul>
       </div>
 
-      {state === "done" ? (
+      {(state === "done" || state === "sent") && (
         <div className="join-done" role="status">
           <p className="join-kick">Thank you</p>
-          <h3 className="join-h">Your building is noted.</h3>
-          <p>Sign-ups aren't connected to a county team yet, so nothing was sent. Keep this page open, or come back once counties are taking offers.</p>
+          <h3 className="join-h">{state === "sent" ? "We got your offer." : "Your building is noted."}</h3>
+          <p>{state === "sent" ? "The GridAid team will email you, then pass the building to your county's emergency team." : "Sign-ups aren't connected to a county team yet, so nothing was sent. Keep this page open, or come back once counties are taking offers."}</p>
           <button type="button" className="jf-submit" onClick={() => setState(null)}>Edit the details</button>
         </div>
-      ) : (
-        <form className="jf" onSubmit={submit} noValidate>
+      )}
+      <form className="jf" onSubmit={submit} noValidate hidden={state === "done" || state === "sent"}>
           <fieldset>
             <legend>The building</legend>
             <label className="jf-f wide"><span>Building name</span><input required name="building" placeholder="Main Street Library" autoComplete="organization" /></label>
@@ -76,16 +79,17 @@ export default function JoinForm() {
           </fieldset>
           <fieldset>
             <legend>Readiness</legend>
-            <div className="jf-f"><span>Backup generator already?</span><Choice name="gen" options={["Yes", "No", "Not sure"]} value={f.gen} onChange={set("gen")} /></div>
-            <div className="jf-f"><span>Step-free entrance?</span><Choice name="access" options={["Yes", "No"]} value={f.access} onChange={set("access")} /></div>
+            <div className="jf-f"><span>Backup generator already?</span><Choice name="generator" options={["Yes", "No", "Not sure"]} value={f.gen} onChange={set("gen")} /></div>
+            <div className="jf-f"><span>Step-free entrance?</span><Choice name="step_free" options={["Yes", "No"]} value={f.access} onChange={set("access")} /></div>
           </fieldset>
           <label className="jf-ok">
             <input type="checkbox" required name="consent" />
             <span>I'm allowed to offer this building, and GridAid may share these details with my county's emergency team.</span>
           </label>
-          <button type="submit" className="jf-submit">Offer this building</button>
-        </form>
-      )}
+          <input type="text" name="_gotcha" tabIndex={-1} autoComplete="off" className="hp" aria-hidden="true" />
+          <button type="submit" className="jf-submit" disabled={state === "sending"}>{state === "sending" ? "Sending…" : "Offer this building"}</button>
+          {state === "error" && <p className="jf-err" role="alert">That didn't go through. Check your connection and try again.</p>}
+      </form>
     </article>
   );
 }

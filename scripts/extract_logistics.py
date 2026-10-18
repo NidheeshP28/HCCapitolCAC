@@ -4,6 +4,9 @@ Reads the values Excel last calculated (open, edit and save the workbook in Exce
 header text so added columns don't break it. Run again whenever the workbook changes:
 
   python scripts/extract_logistics.py [path/to/GridAid_County_Plans.xlsx]
+
+If GridAid_County_Logistics.xlsx sits next to it, its health-service counts (home oxygen, dialysis, home health,
+hospice) and recent-outage rows are merged in too; the logistics page uses them.
 """
 import json
 import sys
@@ -13,6 +16,8 @@ import openpyxl
 
 ROOT = Path(__file__).resolve().parent.parent
 XLSX = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "GridAid_County_Plans.xlsx"
+LOGI = XLSX.with_name("GridAid_County_Logistics.xlsx")
+SERVICES = {"Home oxygen service": "oxygen", "Dialysis at a center": "dialysis", "Home health": "homeHealth", "Hospice at home": "hospice"}
 OUT = ROOT / "frontend" / "src" / "data" / "logistics.json"
 
 GEN_KEYS = {"Hookup only": "hookup", "Permanent generator, diesel": "diesel",
@@ -96,7 +101,35 @@ def main():
                         "gas": num(starts(c, "Natural gas for")), "solar": 0},
         }
 
-    OUT.write_text(json.dumps({"source": XLSX.name, "generators": generators, "inputs": inputs, "counties": counties}, indent=1) + "\n")
+    # place names for ZIPs: urban plans name the area, rural plans name the nearest town
+    wb = openpyxl.load_workbook(XLSX, data_only=True)
+    areas = {}
+    if "Urban Site Plans" in wb.sheetnames:
+        us = wb["Urban Site Plans"]
+        for r in table(us, find_row(us, "County")):
+            if r.get("ZIP") and r.get("Area"):
+                areas[str(r["ZIP"]).zfill(5)] = r["Area"]
+    if "Rural Site Plans" in wb.sheetnames:
+        rs = wb["Rural Site Plans"]
+        for r in table(rs, find_row(rs, "County")):
+            if r.get("ZIP") and isinstance(r.get("Site"), str):
+                areas.setdefault(str(r["ZIP"]).zfill(5), r["Site"].replace("Public building near ", ""))
+
+    if LOGI.exists():
+        lw = openpyxl.load_workbook(LOGI, data_only=True)
+        ls = lw["County Plans"]
+        for r in table(ls, find_row(ls, "County")):
+            fips = str(r.get("FIPS") or "").zfill(5)
+            if fips in counties:
+                counties[fips]["services"] = {k: num(r[h]) for h, k in SERVICES.items() if h in r}
+        if "Outages" in lw.sheetnames:
+            os_ = lw["Outages"]
+            for r in table(os_, find_row(os_, "County")):
+                for fips, c in counties.items():
+                    if c["name"] == r["County"]:
+                        c["outage"] = {"date": r["Date"], "what": r["What happened"], "src": r["Source"]}
+
+    OUT.write_text(json.dumps({"source": XLSX.name, "areas": areas, "generators": generators, "inputs": inputs, "counties": counties}, indent=1) + "\n")
     print(f"{OUT.relative_to(ROOT)}: {len(generators)} generator types, {len(counties)} counties")
 
 

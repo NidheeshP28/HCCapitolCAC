@@ -2,13 +2,9 @@ import { useRef } from "react";
 import SectionHead from "./SectionHead.jsx";
 import JoinForm from "./JoinForm.jsx";
 import { useReveal } from "./useReveal.js";
-
-const SOURCES = [
-  ["HHS emPOWER", "How many people rely on powered medical equipment in each ZIP.", "https://empowermap.hhs.gov/"],
-  ["US Census ZCTA", "ZIP code boundaries for the map.", "https://www.census.gov/programs-surveys/geography/guidance/geo-areas/zctas.html"],
-  ["OpenStreetMap", "Libraries, schools, community centers, and fire stations.", "https://www.openstreetmap.org/copyright"],
-  ["County plans workbook", "Generator costs, FEMA share, reach, and power needs.", "https://ncdps.gov/news/press-releases/2019/06/18/communities-receive-generators-powering-critical-public"],
-];
+import Apa from "../ui/Apa.jsx";
+import { RESEARCH, SOURCE_GROUPS, REFS } from "../../data/references.js";
+import { goTo } from "../../lib/route.js";
 
 export default function DataSection() {
   const ref = useRef(null);
@@ -17,19 +13,29 @@ export default function DataSection() {
     <section className="sec data" id="data" ref={ref}>
       <SectionHead
         title="Join Our Mission Towards a Safer and Connected Community"
-        action={<button type="button" className="logistics-btn">See logistics <span aria-hidden="true">→</span></button>}
+        action={<button type="button" className="logistics-btn" onClick={() => goTo("logistics")}>See logistics <span aria-hidden="true">→</span></button>}
       />
       <div className="data-grid">
         <JoinForm />
 
-        <article className="card rv">
-          <header className="card-h"><h3>Sources</h3></header>
-          <ul className="src">
-            {SOURCES.map(([n, d, h]) => (
-              <li key={n}><a href={h} target="_blank" rel="noreferrer">{n} ↗</a><span>{d}</span></li>
+        <div className="data-side">
+          <article className="card rv refs">
+            <header className="card-h"><h3>Sources</h3></header>
+            {SOURCE_GROUPS.map(([group, ids]) => (
+              <details key={group} className="refs-g" open={group === "Data"}>
+                <summary>{group} <span>{ids.length}</span></summary>
+                <ol>
+                  {ids.map((id) => (
+                    <li key={id}>
+                      <Apa id={id} />
+                      {REFS[id].use && <p className="refs-use">{REFS[id].use}</p>}
+                    </li>
+                  ))}
+                </ol>
+              </details>
             ))}
-          </ul>
-        </article>
+          </article>
+        </div>
       </div>
     </section>
   );

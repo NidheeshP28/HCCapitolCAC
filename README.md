@@ -68,7 +68,27 @@ cd backend && pip install -r requirements.txt && uvicorn main:app --port 8000
 cd frontend && npm install && npm run dev
 ```
 
-Open the address Vite prints, scroll to open the map, pick a county, and drag the sliders. The link in the address bar (`#c=48201&k=5&r=10`) reproduces the current plan.
+Open the address Vite prints and scroll to open the map. **See logistics** opens the second page (`#c=48201&p=logistics`), which shares the map page's county, budget, reach and placement method.
+
+### The logistics page (for council members)
+
+- **Simulator:** drag sites, change each site's reach, add or remove sites, set the budget and generator type, and switch between the three planner methods and the seven search algorithms. A dashed line shows where sites moved after each change.
+- **Who is helped:** people reached and not reached, split by home oxygen, dialysis, home health and hospice (estimated from each workbook county's mix).
+- **Site by site:** new people reached, power needed, public phone and address (OpenStreetMap only), and flags to check.
+- **Next steps:** cost against time for each generator type, a timeline, and a checklist saved in the browser.
+- **Documents:** a briefing PDF and a petition PDF, built in the browser from the plan on screen.
+- **Assistant:** a floating chat that searches the web (Gemini with Google Search) for current outages, storms and their effect on people. Its rules are in `backend/chat.py`.
+
+### Configuration
+
+| Variable | Where | What |
+|---|---|---|
+| `GEMINI_API_KEY` | backend (server only) | Turns on the assistant. Never put it in the front end. |
+| `GEMINI_MODEL` | backend, optional | Defaults to `gemini-3.8-flash`. |
+| `VITE_FORMSPREE_JOIN` | frontend build | Formspree form ID for "Offer a building". |
+| `VITE_FORMSPREE_PETITION` | frontend build | Formspree form ID for sending a petition to the team. |
+
+See `backend/.env.example` and `frontend/.env.example`. Without them the site still works: the assistant says it isn't set up, and the forms say nothing was sent.
 
 ### Rebuilding the data
 
@@ -79,6 +99,8 @@ python scripts/make_zcta.py --all        # split into counties
 python scripts/fetch_sites.py            # candidate sites from OpenStreetMap
 python scripts/build.py                  # greedy + exact solve -> backend/data.json
 python scripts/make_zip_shapes.py path/to/cb_2020_us_zcta520_500k.shp   # ZIP polygons -> frontend/public/zips/
+python scripts/make_contacts.py          # public phone and address per site -> frontend/public/contacts/
+python scripts/extract_logistics.py      # GridAid_County_Plans.xlsx (+ _Logistics.xlsx) -> frontend/src/data/logistics.json
 ```
 
 The Census file is <https://www2.census.gov/geo/tiger/GENZ2020/shp/cb_2020_us_zcta520_500k.zip>; unzip it outside the repo.
@@ -87,8 +109,9 @@ The Census file is <https://www2.census.gov/geo/tiger/GENZ2020/shp/cb_2020_us_zc
 
 ```
 gridaid-app/
-├── backend/      # FastAPI: serves data.json (and the built front end in production)
-├── frontend/     # React + Vite + Leaflet + GSAP; public/zips/<fips>.json are the ZIP polygons
+├── backend/      # FastAPI: data.json, /api/compare (optimizer.py), /api/chat (chat.py)
+├── frontend/     # React + Vite + Leaflet + GSAP; src/pages/Logistics.jsx is page two
+│                 #   public/zips/ ZIP polygons, public/contacts/ site contacts, src/data/references.js sources (APA)
 ├── scripts/      # data pipeline: emPOWER, sites, greedy + exact optimizer, ZIP shapes
 └── data/         # raw and intermediate files (not deployed)
 ```

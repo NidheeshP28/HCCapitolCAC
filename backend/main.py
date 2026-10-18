@@ -1,7 +1,8 @@
 import json
 from functools import lru_cache
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 BASE = Path(__file__).parent
@@ -35,6 +36,19 @@ def compare(county: str, k: int = 5, radius: float | None = None, methods: str |
         raise HTTPException(404 if c is None else 422, "unknown county" if c is None else "k must be 1 to 40")
     names = [m for m in (methods.split(",") if methods else ALGORITHMS) if m in ALGORITHMS]
     return {"county": county, "k": k, "radius": radius or c["R"], "results": run(Problem.from_county(c, radius or c["R"], k), names)}
+
+
+@app.post("/api/chat")
+async def chat(request: Request):
+    """The logistics page's assistant (backend/chat.py). Needs GEMINI_API_KEY in the environment."""
+    from chat import answer
+    try:
+        body = await request.json()
+    except ValueError:
+        return JSONResponse({"error": "bad-json"}, status_code=400)
+    ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "?").split(",")[0].strip()
+    status, out = answer(body.get("messages"), body.get("context"), ip)
+    return JSONResponse(out, status_code=status)
 
 
 # Production: serve the built React app from the same server.

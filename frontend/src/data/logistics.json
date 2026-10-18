@@ -1,5 +1,46 @@
 {
  "source": "GridAid_County_Plans.xlsx",
+ "areas": {
+  "93535": "Lancaster",
+  "93536": "Lancaster",
+  "90650": "Norwalk",
+  "91342": "Sylmar",
+  "93550": "Palmdale",
+  "93534": "Lancaster",
+  "91331": "Pacoima",
+  "91335": "Reseda",
+  "90044": "Los Angeles",
+  "91744": "La Puente",
+  "45719": "Chauncey Public Library",
+  "45723": "Coolville Public Library",
+  "45710": "Wells (Albany) Public Library",
+  "40818": "Coalgood",
+  "40855": "Lynch",
+  "40819": "Coldiron",
+  "40808": "Big Laurel",
+  "03570": "Berlin",
+  "03584": "Lancaster",
+  "03576": "Colebrook",
+  "03595": "Twin Mountain",
+  "03592": "Pittsburg",
+  "03582": "Groveton",
+  "03579": "Errol",
+  "03846": "Jackson",
+  "59034": "Hardin",
+  "59022": "Crow Agency",
+  "59050": "Lodge Grass",
+  "59016": "Busby",
+  "59066": "Pryor",
+  "59031": "Garryowen",
+  "59035": "Fort Smith",
+  "59075": "Saint Xavier",
+  "59089": "Wyola",
+  "59025": "Decker",
+  "38778": "Sunflower",
+  "38736": "Doddsville",
+  "38737": "Drew",
+  "38753": "Inverness"
+ },
  "generators": {
   "hookup": {
    "name": "Hookup only",
@@ -77,6 +118,17 @@
     "diesel": 154732.05,
     "gas": 60584.5,
     "solar": 0
+   },
+   "services": {
+    "oxygen": 13254,
+    "dialysis": 13765,
+    "homeHealth": 16517,
+    "hospice": 2735
+   },
+   "outage": {
+    "date": "Jan 8, 2025",
+    "what": "Wildfires and Santa Ana winds: 40,573 SCE customers in the county under public safety power shutoffs; 123,335 more considered",
+    "src": "https://patch.com/california/los-angeles/140k-lose-electricity-public-safety-power-shutoffs-amid-fires"
    }
   },
   "17031": {
@@ -115,6 +167,17 @@
     "diesel": 79012.11,
     "gas": 30936.76,
     "solar": 0
+   },
+   "services": {
+    "oxygen": 5550,
+    "dialysis": 6193,
+    "homeHealth": 5852,
+    "hospice": 1386
+   },
+   "outage": {
+    "date": "Jul 15, 2024",
+    "what": "Tornado outbreak: more than 440,000 ComEd customers lost power; most restored by Jul 19",
+    "src": "https://www.businesswire.com/news/home/20240717251696/en"
    }
   },
   "48201": {
@@ -153,6 +216,17 @@
     "diesel": 65843.42,
     "gas": 25780.64,
     "solar": 0
+   },
+   "services": {
+    "oxygen": 4366,
+    "dialysis": 6987,
+    "homeHealth": 5164,
+    "hospice": 1335
+   },
+   "outage": {
+    "date": "Jul 8, 2024",
+    "what": "Hurricane Beryl: more than 2.2 million CenterPoint customers lost power during a heat advisory; 1.1 million still out 3 days later",
+    "src": "https://www.axios.com/local/houston/2024/07/11/houston-power-outage-storm-beryl-centerpoint"
    }
   },
   "04013": {
@@ -191,6 +265,17 @@
     "diesel": 75719.94,
     "gas": 29647.73,
     "solar": 0
+   },
+   "services": {
+    "oxygen": 6677,
+    "dialysis": 3712,
+    "homeHealth": 2797,
+    "hospice": 1279
+   },
+   "outage": {
+    "date": "May 2023 study",
+    "what": "Georgia Tech study: a multiday blackout during a heat wave would send half of Phoenix residents to emergency care",
+    "src": "https://www.axios.com/local/phoenix/2023/05/24/heat-wave-black-out-phoenx-heat-deaths-hospital"
    }
   },
   "12086": {
@@ -229,6 +314,17 @@
     "diesel": 55966.91,
     "gas": 21913.54,
     "solar": 0
+   },
+   "services": {
+    "oxygen": 5732,
+    "dialysis": 3127,
+    "homeHealth": 2673,
+    "hospice": 1081
+   },
+   "outage": {
+    "date": "Sep 11, 2017",
+    "what": "Hurricane Irma: about 830,000 of 1.1 million without power, roughly three-quarters",
+    "src": "https://www.wgbh.org/news/2017-09-11/power-out-for-more-than-60-percent-of-florida-homes-and-businesses"
    }
   },
   "39009": {
@@ -267,6 +363,17 @@
     "diesel": 9876.51,
     "gas": 3867.1,
     "solar": 0
+   },
+   "services": {
+    "oxygen": 284,
+    "dialysis": 88,
+    "homeHealth": 148,
+    "hospice": 77
+   },
+   "outage": {
+    "date": "Jun 29, 2012",
+    "what": "Windstorm: about 87 to 91% of AEP customers without power; 90% restoration not expected until Jul 6",
+    "src": "https://woub.org/?p=5527"
    }
   },
   "21095": {
@@ -305,6 +412,17 @@
     "diesel": 6584.34,
     "gas": 2578.06,
     "solar": 0
+   },
+   "services": {
+    "oxygen": 207,
+    "dialysis": 88,
+    "homeHealth": 165,
+    "hospice": 55
+   },
+   "outage": {
+    "date": "Late Sep 2024",
+    "what": "Hurricane Helene: more than 6,000 people without power; local state of emergency",
+    "src": "https://www.wymt.com/2024/09/30/harlan-county-power-outage-update/"
    }
   },
   "33007": {
@@ -343,6 +461,17 @@
     "diesel": 16460.86,
     "gas": 6445.16,
     "solar": 0
+   },
+   "services": {
+    "oxygen": 157,
+    "dialysis": 66,
+    "homeHealth": 110,
+    "hospice": 22
+   },
+   "outage": {
+    "date": "Oct 30, 2017",
+    "what": "Windstorm: about 450,000 NH customers lost power statewide; North Country hardest hit for road damage. No Coos-only count found",
+    "src": "https://www.nhpr.org/nh-news/2017-10-30/update-n-h-sees-widespread-damage-from-severe-wind-rainstorm"
    }
   },
   "30003": {
@@ -381,6 +510,17 @@
     "diesel": 26337.37,
     "gas": 10312.25,
     "solar": 0
+   },
+   "services": {
+    "oxygen": 133,
+    "dialysis": 73,
+    "homeHealth": 0,
+    "hospice": 0
+   },
+   "outage": {
+    "date": "Jun 11, 2022",
+    "what": "Hardin downburst: winds estimated near 115 mph snapped power poles; about 1,778 customers lost power",
+    "src": "https://www.weather.gov/byz/June-11-2022-Hardin-Downburst"
    }
   },
   "28133": {
@@ -419,6 +559,17 @@
     "diesel": 9876.51,
     "gas": 3867.1,
     "solar": 0
+   },
+   "services": {
+    "oxygen": 92,
+    "dialysis": 111,
+    "homeHealth": 83,
+    "hospice": 33
+   },
+   "outage": {
+    "date": "Jan 2026",
+    "what": "Ice storm: more than 140,000 Mississippians without power; nearby Delta counties 92 to 96% out. No Sunflower-only figure found",
+    "src": "https://www.yahoo.com/news/articles/nearly-140-000-still-without-160954894.html"
    }
   }
  }

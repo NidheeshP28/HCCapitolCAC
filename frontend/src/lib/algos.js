@@ -5,6 +5,12 @@
 
 const EPS = 1e-9;
 
+// Optional time limit for the slow searches (the logistics page runs all seven at once on big budgets).
+// They stop early and return the best plan so far. Infinity unless a caller sets it; always reset after use.
+const T = { stop: Infinity };
+export const deadline = (ms) => { T.stop = performance.now() + ms; };
+const late = () => performance.now() > T.stop;
+
 export function makeProblem(D, Z, S, radii, w, q) {
   const m = Z * radii.length, W = new Float64Array(m);
   radii.forEach((_, r) => { for (let z = 0; z < Z; z++) W[r * Z + z] = w[z] / radii.length; });
@@ -67,6 +73,7 @@ export function lazy(P, k) {
 export function beam(P, k, width = 6) {
   let states = [{ sel: [], c: new Uint16Array(P.m), v: 0 }], best = states[0];
   for (let step = 0; step < k; step++) {
+    if (late()) break;
     const kids = new Map();
     for (const st of states) {
       const g = [];
@@ -89,7 +96,7 @@ export function local(P, k, start = greedy(P, k).sel) {
   const sel = [...start], c = counts(P, sel), used = new Uint8Array(P.n);
   sel.forEach((s) => (used[s] = 1));
   let V = value(P, sel), moves = 0;
-  for (let it = 0; it < 500; it++) {
+  for (let it = 0; it < 500 && !late(); it++) {
     let bd = EPS, bp = -2, bj = -1;
     if (sel.length < k) for (let j = 0; j < P.n; j++) if (!used[j]) { const g = gain(P, c, j); if (g > bd) { bd = g; bp = -1; bj = j; } }
     for (let p = 0; p < sel.length; p++) {
@@ -112,7 +119,7 @@ export function anneal(P, k, start = greedy(P, k).sel, iters = 8000, seed = 1) {
   const out = []; for (let s = 0; s < P.n; s++) if (!used[s]) out.push(s);
   let V = value(P, sel), best = V, bestSel = [...sel];
   const t0 = P.W.reduce((a, b) => a + b, 0) / P.m || 1, t1 = t0 / 100;
-  for (let i = 0; i < iters && out.length && sel.length; i++) {
+  for (let i = 0; i < iters && out.length && sel.length && ((i & 255) || !late()); i++) {
     const T = t0 * Math.pow(t1 / t0, i / iters), p = Math.floor(R() * sel.length), j = Math.floor(R() * out.length), r = sel[p], s = out[j];
     rem(P, c, r);
     let d = -0; for (const e of P.cov[r]) if (!c[e]) d -= P.W[e];
@@ -140,7 +147,7 @@ export function genetic(P, k, seed = 1, popSize = 30, gens = 60) {
   let pop = [greedy(P, k).sel];
   while (pop.length < popSize) pop.push(fill(shuffled().slice(0, 40), [], pop.length % 2 === 1));
   let best = pop[0];
-  for (let g = 0; g < gens; g++) {
+  for (let g = 0; g < gens && !late(); g++) {
     pop.sort((a, b) => fit(b) - fit(a));
     if (fit(pop[0]) > fit(best) + EPS) best = pop[0];
     const pick = () => { let b = pop[Math.floor(R() * pop.length)]; for (let t = 0; t < 2; t++) { const x = pop[Math.floor(R() * pop.length)]; if (fit(x) > fit(b)) b = x; } return b; };

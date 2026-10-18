@@ -1,7 +1,7 @@
 // Runs the slow placement work off the main thread: robust and optimal plans, the algorithm comparison,
 // and the "Optimal" buttons (fewest centers / shortest reach for a coverage target).
 import { buildDistances, greedyCurve, minCenters, minReach } from "./plan.js";
-import { ALGORITHMS, best, makeProblem, value } from "./algos.js";
+import { ALGORITHMS, best, deadline, makeProblem, value } from "./algos.js";
 
 const counties = new Map();
 
@@ -47,6 +47,20 @@ const ops = {
       const t = performance.now(), r = fn(P, k);
       return { key, name, about, cov: pct(c, P, r.sel), ms: performance.now() - t, exact: !!r.exact, note: r.note ?? "" };
     });
+  },
+  // every algorithm's placement, for the logistics simulator: sites in order of people added, each capped in time
+  placements({ fips, k, R, ms = 1800 }) {
+    const c = counties.get(fips), P = problem(c, [R]);
+    try {
+      return ALGORITHMS.map(([key, name, about, fn]) => {
+        const t = performance.now();
+        deadline(ms);
+        const r = key === "bnb" ? fn(P, k, ms) : fn(P, k);
+        return { key, name, about, cov: pct(c, P, r.sel), ms: performance.now() - t, exact: !!r.exact, ...finish(c, P, r.sel, R) };
+      });
+    } finally {
+      deadline(Infinity);
+    }
   },
   // fewest centers that reach the target at reach R; greedy gives an upper bound, the exact search tries one fewer
   minCenters({ fips, R, target }) {

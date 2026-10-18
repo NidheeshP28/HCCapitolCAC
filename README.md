@@ -1,6 +1,6 @@
 # GridAid - Aaron Qin, Hardy Wang, Anay Sura, Nidheesh Pusuluri
 
-GridAid is a computational engine that helps counties decide where to place backup-power centers in case of future outages. It was built with people who depend on home oxygen, dialysis equipment, and powered wheelchairs in mind first, who would be left without the electricity they need in case of an outage. Users select a US county, choose N centers, and set a coverage radius in miles. The app then optimizes site placement and displays the results on an interactive map.
+GridAid is a computational engine that helps counties decide where to place backup-power centers in case of future outages. It was built for people who depend on home oxygen, dialysis equipment, and powered wheelchairs in mind first, who would be left without the electricity they need in case of an outage. Users select a US county, choose N centers, and set a coverage radius in miles. The app then optimizes site placement and displays the results on an interactive map. The optimal number is limited by the estimated budget based on location and population.
 
 ## Motivation
 

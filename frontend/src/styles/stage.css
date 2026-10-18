@@ -1,29 +1,61 @@
 /* ---------- the logo ---------- */
-.logo { display: inline-flex; align-items: center; font-family: var(--f-logo); font-weight: 600; letter-spacing: -0.045em; line-height: 1; color: var(--ink); white-space: nowrap; }
-.logo-bolt { width: 0.36em; height: 0.68em; margin: 0 0.035em; overflow: visible; fill: var(--gap); animation: bolt 2.6s ease-in-out infinite; }
+/* the wordmark is drawn (Logo.jsx); --logo-h sets its height from the font size, so every placement keeps its size */
+.logo { --logo-h: 0.6em; position: relative; display: inline-flex; width: fit-content; line-height: 1; white-space: nowrap; }
+.logo-word { display: block; height: var(--logo-h); }
+.logo-bolt { position: absolute; display: block; overflow: visible; animation: bolt 2.6s ease-in-out infinite; }
 @keyframes bolt {
-  0%, 100% { opacity: 1; filter: drop-shadow(0 0 0 rgba(224, 67, 27, 0)); }
-  50% { opacity: 0.86; filter: drop-shadow(0 0 0.07em rgba(224, 67, 27, 0.6)); }
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 0 rgba(255, 161, 116, 0)); }
+  50% { opacity: 0.86; filter: drop-shadow(0 0 0.07em rgba(255, 161, 116, 0.75)); }
 }
 .logo-rise { display: inline-flex; }
 .lg-mask { display: inline-block; overflow: hidden; padding: 0.1em 0.05em 0.06em; margin: -0.1em -0.05em -0.06em; }
-.lg-ch { display: block; }
-.lg-bolt .lg-ch { display: flex; align-items: center; height: 1em; }
+.lg-ch { position: relative; display: block; }
 
 /* ---------- the stage: hero + planner share one pinned screen ---------- */
 .stage { position: relative; background: var(--paper); overflow: hidden; overflow: clip; }
 .stage[data-motion="pin"] { height: 100svh; min-height: 680px; }
 .stage-grid { position: absolute !important; inset: 0; z-index: 0; }
+.stage-ring { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 
 .stage-hero { position: absolute; inset: 0; pointer-events: none; }
 .stage-hero > * { pointer-events: none; }
 .stage-hero a, .stage-hero button { pointer-events: auto; }
+
+/* the night sky behind the hero (Galaxy). Its mask is an ellipse around the map window: clear inside, black outside,
+   with a soft edge. At rest it fits inside the small map window (no glow around it); Stage.jsx then grows it
+   (--rx, --ry) as the map expands, and the white spreads out from the map until it fills the page. */
+.stage-sky {
+  --rx: 16vw; --ry: 13vh;
+  --sky-mask: radial-gradient(var(--rx) var(--ry) at 50% 54%, transparent 28%, rgba(0, 0, 0, 0.35) 55%, rgba(0, 0, 0, 0.75) 80%, #000 100%);
+  position: absolute; z-index: 0; inset: 0; background: #000;
+  -webkit-mask-image: var(--sky-mask); mask-image: var(--sky-mask);
+}
+.hero-lead { color: rgba(255, 255, 255, 0.78) !important; }
 
 /* the wordmark sits above the map window */
 .hero-logo { position: absolute; z-index: 4; left: 0; right: 0; top: clamp(60px, 10.5vh, 120px); margin: 0; display: flex; justify-content: center; font-size: clamp(76px, 12vw, 190px); will-change: transform; }
 
 .hero-lead-wrap { position: absolute; z-index: 4; left: 50%; bottom: 76px; width: min(58ch, calc(100% - 40px)); transform: translateX(-50%); text-align: center; }
 .hero-lead { font-size: clamp(13.5px, 1.05vw, 16px); line-height: 1.55; color: var(--ink-2); }
+
+/* the shuttle on its launch tower, right of the map: lifts off on the scroll that opens the map (Stage.jsx).
+   No z-index or transform on .launch itself, so its layers can sit around the planner (2) and the logo (4):
+   tower behind the map, smoke above the logo, the shuttle above its own smoke. */
+.launch { position: absolute; right: clamp(24px, 6vw, 120px); bottom: 0; height: min(64vh, 660px); aspect-ratio: 1 / 2; }
+.launch-tower { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; }
+.launch-arms { z-index: 6; }
+.rocket-ship { position: absolute; z-index: 6; left: 10%; top: 10%; width: 50%; will-change: transform; }
+.rocket-ship > svg { display: block; width: 100%; height: auto; }
+.rocket-flame { position: absolute; z-index: -1; top: 95%; width: 22%; transform-origin: 50% 0; opacity: 0; visibility: hidden; }
+.rocket-flame.f-srb-l { left: 8%; }
+.rocket-flame.f-srb-r { left: 70%; }
+.rocket-flame.f-main { left: 41%; top: 85%; width: 18%; }
+.rocket-flame svg { display: block; width: 100%; height: auto; transform-origin: 50% 0; animation: rocket-flicker 0.14s ease-in-out infinite alternate; }
+@keyframes rocket-flicker { from { transform: scale(1.05, 0.86); } to { transform: scale(0.93, 1.08); } }
+.rocket-trail { position: absolute; z-index: 3; left: 15.5%; bottom: 14%; width: 39%; border-radius: 999px; transform-origin: 50% 100%; background: linear-gradient(to top, rgba(222, 225, 229, 0.7), rgba(238, 240, 242, 0.4)); filter: blur(6px); opacity: 0; visibility: hidden; }
+.rocket-smoke { position: absolute; z-index: 5; left: 35%; top: 87.5%; }
+.rocket-smoke i { --s: 14vh; position: absolute; left: calc(var(--s) / -2); top: calc(var(--s) / -2); width: var(--s); height: var(--s); border-radius: 50%; background: radial-gradient(circle at 46% 44%, rgba(250, 251, 252, 0.88) 0%, rgba(236, 238, 241, 0.8) 20%, rgba(226, 229, 233, 0.66) 35%, rgba(220, 224, 228, 0.44) 50%, rgba(218, 222, 226, 0.24) 60%, rgba(218, 222, 226, 0.09) 67%, rgba(218, 222, 226, 0) 71%); opacity: 0; visibility: hidden; will-change: transform, opacity; }
+.rocket-smoke i.smoke-pad { --s: 11vh; }
 
 .hero-cue { position: absolute; z-index: 4; left: 0; right: 0; bottom: 18px; display: flex; justify-content: center; align-items: center; gap: 22px; }
 .skip { display: inline-block; text-decoration: none; font: 500 10.5px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; padding: 9px 13px; border: 1px solid var(--ink); background: var(--card); transition: background 0.15s, color 0.15s; }
@@ -40,6 +72,10 @@
 .stage[data-motion="flow"] .hero-lead-wrap { position: relative; left: auto; bottom: auto; transform: none; padding: 0 16px; }
 .stage[data-motion="flow"] .hero-cue { position: relative; inset: auto; }
 .stage[data-motion="flow"] .cue { display: none; }
+.stage[data-motion="flow"] .launch, .stage[data-motion="flow"] .stage-ring { display: none; }
+/* flow: the sky covers only the hero and fades to white along its bottom edge, into the planner below */
+.stage[data-motion="flow"] .stage-hero { padding-bottom: 72px; }
+.stage[data-motion="flow"] .stage-sky { --sky-mask: linear-gradient(to bottom, #000 calc(100% - 64px), transparent); }
 @media (max-width: 720px) {
   .hero-bar { flex-direction: column; align-items: flex-start; gap: 10px; }
   .hero-nav { justify-content: flex-start; }

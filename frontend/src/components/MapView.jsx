@@ -4,6 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { usePlanner } from "../state/PlannerContext.jsx";
 import { boundsOf } from "../lib/zips.js";
 import { fmt, fmt1, KIND, miles, peopleLabel, siteName } from "../lib/format.js";
+import MapGame from "./MapGame.jsx";
 
 const MILE_M = 1609.34;
 // Esri's light-gray canvas: a quiet street base with its labels in a separate layer, so the labels can sit above the ZIPs.
@@ -58,6 +59,7 @@ export default function MapView() {
   const S = useRef({ pins: new Map(), rings: new Map(), items: [], fitted: null });
   const cb = useRef(P);
   cb.current = P;
+  const [lmap, setLmap] = useState(null);           // the map, once made, for the astronaut game
 
   // ---- the map itself, once ----
   useEffect(() => {
@@ -115,8 +117,10 @@ export default function MapView() {
       }
     });
     ro.observe(el);
+    setLmap(map);
 
     return () => {
+      setLmap(null);
       ro.disconnect();
       cancelAnimationFrame(raf);
       el.removeEventListener("wheel", onWheel);
@@ -291,6 +295,7 @@ export default function MapView() {
         <button type="button" onClick={() => zoom(-0.5)} aria-label="Zoom out">−</button>
         <button type="button" onClick={fit} aria-label="Show the whole county" title="Show the whole county">⤢</button>
       </div>
+      <MapGame map={lmap} shown={shown} replaying={step != null} />
       {N > 0 && (
         <div className="replay">
           <button type="button" className="replay-btn" onClick={play} aria-label={playing ? "Pause" : "Play: add the centers one at a time"}>

@@ -35,7 +35,7 @@ export default function Sites({ S, selected, setSelected }) {
         <table className="lg-table">
           <thead>
             <tr>
-              <th>#</th><th>Site and contact</th><th>New people reached</th><th>Power needed<sup>*</sup></th><th>Fast start</th><th>Full setup</th><th>Check first</th>
+              <th>#</th><th>Site and contact</th><th>New people reached</th><th>Power needed</th><th>Quick start</th><th>Full setup</th><th>Check first</th>
             </tr>
           </thead>
           <tbody>
@@ -47,7 +47,7 @@ export default function Sites({ S, selected, setSelected }) {
                   <td className="n"><b className="pinno">{i + 1}</b></td>
                   <td className="site">
                     <strong>{s.name}</strong>
-                    <em>{s.custom ? "Placed by hand" : KIND[s.type] ?? s.type}{s.osm ? ` · ${s.osm}` : ""}</em>
+                    <em>{s.custom ? "Placed by hand" : KIND[s.type] ?? s.type}</em>
                     <Contact c={s.idx != null ? contacts[String(s.idx)] : null} site={s} county={county} />
                   </td>
                   <td className="gain">
@@ -55,8 +55,8 @@ export default function Sites({ S, selected, setSelected }) {
                     <b>{fmt(m.gain)}</b>
                     {m.within - m.gain >= 1 && <small>{fmt(m.within)} within {s.r} mi in all</small>}
                   </td>
-                  <td className="kw"><b>{Math.round(lo)} to {Math.round(hi)} kW</b><small>about {fmt(visitorsFor(m.served))} people at once{units > 1 ? ` · ${units} generators at peak` : ""}</small></td>
-                  <td className="fast"><b>Hookup {money(hook.setup)}</b><small>then {money(GEN.hookup.rentPerWeek)} a week to rent</small></td>
+                  <td className="kw"><b>{Math.round(lo)} to {Math.round(hi)} kW</b><small>about {fmt(visitorsFor(m.served))} people at once{units > 1 ? ` · needs ${units} generators` : ""}</small></td>
+                  <td className="fast"><b>{money(hook.setup)} to plug in a rented generator</b><small>then {money(GEN.hookup.rentPerWeek)} a week rent</small></td>
                   <td className="full"><b>{money(full.perSite)}</b><small>{GEN[gen].name.toLowerCase()}</small></td>
                   <td className="flags">
                     {flags.length ? <ul>{flags.map((f) => <li key={f.t} className={f.warn ? "warn" : ""}>{f.t}</li>)}</ul> : <span className="ok">Nothing flagged</span>}
@@ -66,7 +66,7 @@ export default function Sites({ S, selected, setSelected }) {
             })}
           </tbody>
         </table>
-        <p className="lg-note">* Power for the people each site would serve (the nearest site that reaches them), at 25% turnout and 275 to 550 watts a person. Phones and addresses come only from public map listings.</p>
+        <p className="lg-note">Phones and addresses come from public map listings.</p>
       </div>
     </section>
   );

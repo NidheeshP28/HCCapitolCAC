@@ -1,13 +1,11 @@
 import { fmt, miles, peopleLabel } from "../../lib/format.js";
 import { areaOf, serviceSplit } from "../../lib/scenario.js";
-import logistics from "../../data/logistics.json";
 
 // Who the plan helps and who it leaves out, by the kind of care they rely on. The split by service is an estimate:
 // the county's own mix (workbook) applied to the people reached and missed.
 export default function People({ S, onAddAt }) {
   const { fips, county, ev, sites } = S;
   if (!county || !ev) return null;
-  const T = logistics.counties[fips];
   const split = serviceSplit(fips, ev.reached, ev.missed);
   const left = ev.unreached.slice(0, 8).map((i) => ({ z: county.zips[i], i }));
 
@@ -27,7 +25,7 @@ export default function People({ S, onAddAt }) {
           {split ? (
             <>
               <table className="lg-svc">
-                <caption>Of them, also receiving <span>estimated from the county mix</span></caption>
+                <caption>The care they use <span>estimated</span></caption>
                 <thead><tr><th></th><th>Reached</th><th>Not reached</th></tr></thead>
                 <tbody>
                   {split.map((s) => (
@@ -39,10 +37,10 @@ export default function People({ S, onAddAt }) {
                   ))}
                 </tbody>
               </table>
-              <p className="lg-note">Services overlap: one person can use more than one. {fmt(T.rely)} people in {T.name.split(",")[0]} rely on powered equipment by the county count; the ZIP data shows {fmt(county.total)}.</p>
+              <p className="lg-note">Some people use more than one.</p>
             </>
           ) : (
-            <p className="lg-note">A breakdown by home oxygen, dialysis, home health and hospice is only in the workbook for its ten counties.</p>
+            <p className="lg-note">A breakdown by type of care isn't available for this county.</p>
           )}
         </article>
 

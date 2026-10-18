@@ -3,7 +3,6 @@ import { useScenario } from "../components/logistics/useScenario.js";
 import Simulator, { GEN_LABEL } from "../components/logistics/Simulator.jsx";
 import People from "../components/logistics/People.jsx";
 import Sites from "../components/logistics/Sites.jsx";
-import Steps from "../components/logistics/Steps.jsx";
 import Chat from "../components/logistics/Chat.jsx";
 import { money } from "../components/logistics/money.js";
 import { briefingPdf } from "../components/logistics/pdf.js";
@@ -21,7 +20,7 @@ import "../styles/logistics.css";
 const STATE = { AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado", CT: "Connecticut", DE: "Delaware", DC: "District of Columbia", FL: "Florida", GA: "Georgia", HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", PR: "Puerto Rico" };
 const longName = (name) => { const [c, st] = name.split(", "); return st ? `${c}, ${STATE[st] ?? st}` : name; };
 
-const PAGE_REFS = ["empower", "zcta", "osm", "ncdps", "fema", "njoem", "vandalia", "herc", "eiaDiesel", "eiaGas", "stow", "santafe", "generac", "oregon", "inogen", "church", "nemhauser", "khuller", "leskovec", "lowerre", "kirkpatrick", "holland", "landdoig", "highs"];
+const PAGE_REFS = ["empower", "zcta", "osm", "ncdps", "fema", "njoem", "vandalia", "herc", "eiaDiesel", "eiaGas", "stow", "santafe", "generac", "oregon", "inogen", "church", "nemhauser", "khuller", "leskovec", "landdoig", "highs"];
 
 // What the other county looks like at its own workbook budget, for the side-by-side row.
 function compareRow(data, id, gen) {
@@ -60,7 +59,7 @@ export default function Logistics() {
   const T = logistics.counties[fips];
   const c = costs(sites.length, gen);
   const other = cmp ? compareRow(data, cmp, gen) : null;
-  const methodName = { phased: "Phased", robust: "Robust", optimal: "Optimal" }[S.method] ?? S.rows?.find((r) => r.key === S.method)?.name ?? S.method;
+  const methodName = { phased: "Phased", robust: "Robust", optimal: "Optimal" }[S.method] ?? S.method;
   const doc = { ...S, methodName, logistics: T };
   const addAt = (z) => {
     edit.add(z.lat, z.lon, `New site near ZIP ${z.z}`);
@@ -86,8 +85,7 @@ export default function Logistics() {
         <div>
           <h1>{longName(county.name)}</h1>
           <p>
-            Backup-power plan for council review. {est?.type ? `${est.type} county, ` : ""}{fmt(county.total)} people rely on powered medical equipment.
-            {!T && " This county is not in the workbook, so costs use the workbook's own formula."}
+            {fmt(county.total)} people here rely on medical equipment that needs power.
           </p>
         </div>
         <div className="lg-head-act">
@@ -106,11 +104,11 @@ export default function Logistics() {
 
       <section className="lg-band" aria-label="Overview">
         <dl>
-          <div><dt>Sites</dt><dd>{sites.length}</dd><p>{sites.length < S.k && !S.edited && est && S.k === sitesFor(est, gen, county) ? `budget buys ${S.k}; ${sites.length} already reach everyone in range` : `${GEN_LABEL[gen].toLowerCase()}, ${S.R} mi reach`}{T ? ` · workbook: ${T.sites.recommended} to ${T.sites.high}` : ""}</p></div>
+          <div><dt>Sites</dt><dd>{sites.length}</dd><p>{sites.length < S.k && !S.edited && est && S.k === sitesFor(est, gen, county) ? `the budget buys ${S.k}; ${sites.length} already reach everyone they can` : `${GEN_LABEL[gen].toLowerCase()}, ${S.R} mi away at most`}</p></div>
           <div><dt>Within reach</dt><dd>{fmt(ev.reached)}</dd><p>{ev.pct.toFixed(1)}% of people who rely on power</p></div>
-          <div><dt>Not reached</dt><dd className={ev.missed >= 0.5 ? "miss" : ""}>{fmt(ev.missed)}</dd><p>{ev.unreached.length} ZIP{ev.unreached.length === 1 ? "" : "s"} outside every circle</p></div>
+          <div><dt>Not reached</dt><dd className={ev.missed >= 0.5 ? "miss" : ""}>{fmt(ev.missed)}</dd><p>in {ev.unreached.length} ZIP code{ev.unreached.length === 1 ? "" : "s"} too far from a site</p></div>
           <div><dt>Full setup</dt><dd>{money(c.setup)}</dd><p>{money(GEN[gen].cost)} a site · {money(c.setup / Math.max(1, ev.reached))} per person reached</p></div>
-          <div><dt>County share</dt><dd>{money(c.local)}</dd><p>if FEMA pays {money(c.fema)}</p></div>
+          <div><dt>County share</dt><dd>{money(c.local)}</dd><p>if federal aid pays {money(c.fema)}</p></div>
         </dl>
         {other && (
           <div className="lg-cmp-row">
@@ -126,12 +124,11 @@ export default function Logistics() {
 
       <div ref={simRef} className="lg-anchor" />
       <h2 className="lg-h2 lg-sim-h">Try the plan</h2>
-      <p className="lg-sub">Move sites, change each one's reach, or let a different method choose. Every number on this page follows.</p>
+      <p className="lg-sub">Drag sites, change how far each one serves, or add and remove sites. Every number on this page updates.</p>
       <Simulator S={S} selected={selected} setSelected={setSelected} />
 
       <People S={S} onAddAt={addAt} />
       <Sites S={S} selected={selected} setSelected={(k) => { setSelected(k); simRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }} />
-      <Steps S={S} />
 
       <section className="lg-sec lg-refs" aria-labelledby="lg-refs-h">
         <h2 id="lg-refs-h" className="lg-h2">References</h2>
@@ -142,7 +139,7 @@ export default function Logistics() {
 
       <footer className="lg-foot">
         <Logo className="foot-logo" />
-        <p>Planning support, not a safety guarantee. Counts are Medicare members only; reach is straight-line distance.</p>
+        <p>Planning support, not a safety guarantee.</p>
         <button type="button" className="lg-link" onClick={() => goTo("planner")}>Back to the map ↑</button>
       </footer>
 

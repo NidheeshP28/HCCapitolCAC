@@ -84,15 +84,15 @@ export function flagsFor(site, m, gen, { busy = false } = {}) {
   const out = [];
   const visitors = visitorsFor(m.served);
   if (site.custom) out.push({ t: "Placed by hand: pick a real building here", warn: true });
-  else if (site.unnamed) out.push({ t: "Unnamed in public map data: confirm the building", warn: true });
-  if (site.moved) out.push({ t: "Moved by hand from the solver's spot", warn: false });
-  if (m.gain < 1) out.push({ t: "Reaches no one the earlier sites don't", warn: true });
+  else if (site.unnamed) out.push({ t: "No name on the map: confirm the building", warn: true });
+  if (site.moved) out.push({ t: "Moved by hand", warn: false });
+  if (m.gain < 1) out.push({ t: "Reaches no one new", warn: true });
   if (busy && visitors >= 50) out.push({ t: `One of the busiest: check room for about ${Math.round(visitors)} at once`, warn: true });
   if (m.overlap > 0 && m.within > 0 && m.overlap / m.within > 0.6) out.push({ t: "Mostly overlaps other sites", warn: false });
   if (site.type === "school") out.push({ t: "School: confirm access on weekends and breaks", warn: false });
   if (site.type === "fire_station") out.push({ t: "Fire station: crews may be out during the disaster", warn: false });
   if (gen === "gas") out.push({ t: "Natural gas: confirm a gas line reaches the building", warn: false });
-  if (gen === "solar") out.push({ t: "Solar: critical loads only (oxygen, medicine, phones)", warn: false });
+  if (gen === "solar") out.push({ t: "Solar: enough for oxygen, medicine and phones only", warn: false });
   return out;
 }
 

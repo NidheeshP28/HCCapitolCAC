@@ -3,20 +3,19 @@ import SimMap from "./SimMap.jsx";
 import Slider from "../ui/Slider.jsx";
 import { GEN, GEN_ORDER, sitesFor } from "../../lib/budget.js";
 import { MODES, niceR, rToT, tToR } from "../../lib/usePlan.js";
-import { ALGORITHMS } from "../../lib/algos.js";
 import { fmt, fmt1, KIND } from "../../lib/format.js";
 import { money } from "./money.js";
 
-export const GEN_LABEL = { hookup: "Hookups only", diesel: "Diesel generators", gas: "Natural gas generators", solar: "Solar + battery" };
+export const GEN_LABEL = { hookup: "Rented generators", diesel: "Diesel generators", gas: "Natural gas generators", solar: "Solar + battery" };
 const MODE_ABOUT = {
-  phased: "Greedy, one site at a time. Earlier sites never move as the budget grows.",
-  robust: "Best average coverage if real travel is 20% shorter or longer.",
-  optimal: "Best plan the exact search finds at this reach.",
+  phased: "Adds sites one at a time; earlier sites stay put.",
+  robust: "Still works if travel turns out shorter or longer than planned.",
+  optimal: "Reaches the most people.",
 };
 const R_TICKS = [1, 3, 10, 30].map((r) => ({ at: rToT(r), label: String(r) }));
 
 export default function Simulator({ S, selected, setSelected }) {
-  const { county, shapes, scale, sites, ev, shift, edit, edited, est, gen, setGen, k, setK, R, radius, setRadius, method, setMethod, rows, modeCov, curve, plan, pending } = S;
+  const { county, shapes, scale, sites, ev, shift, edit, edited, est, gen, setGen, k, setK, R, radius, setRadius, method, setMethod, modeCov, curve, plan, pending } = S;
   const [adding, setAdding] = useState(false);
   const [budget, setBudget] = useState(null);
   useEffect(() => { setBudget(null); }, [county]);
@@ -28,16 +27,10 @@ export default function Simulator({ S, selected, setSelected }) {
   const sel = sites.find((s) => s.key === selected) ?? null;
   const selN = sel ? sites.indexOf(sel) + 1 : 0;
 
-  const methodRows = [
-    ...Object.entries(MODES).map(([key, name]) => ({
-      key, name, about: MODE_ABOUT[key],
-      cov: key === method && plan && !plan.pending ? plan.cov : key === "phased" ? curve?.cum[Math.min(k, curve.cum.length) - 1] : modeCov[key],
-    })),
-    ...ALGORITHMS.map(([key, name, about]) => {
-      const r = rows?.find((x) => x.key === key);
-      return { key, name, about, cov: r?.cov, exact: r?.exact, ms: r?.ms };
-    }),
-  ];
+  const methodRows = Object.entries(MODES).map(([key, name]) => ({
+    key, name, about: MODE_ABOUT[key],
+    cov: key === method && plan && !plan.pending ? plan.cov : key === "phased" ? curve?.cum[Math.min(k, curve.cum.length) - 1] : modeCov[key],
+  }));
   const top = Math.max(0, ...methodRows.map((r) => r.cov ?? 0));
   const methodName = methodRows.find((r) => r.key === method)?.name ?? "";
 
@@ -70,7 +63,7 @@ export default function Simulator({ S, selected, setSelected }) {
         </fieldset>
 
         <fieldset className="lg-group">
-          <legend>Sites and reach</legend>
+          <legend>Sites and distance</legend>
           <div className="lg-row">
             <span>Sites</span>
             <div className="lg-step">
@@ -83,7 +76,7 @@ export default function Simulator({ S, selected, setSelected }) {
           <Slider value={k} min={1} max={maxK} onChange={setK} ticks={[]} label="Number of sites" valueText={`${k} sites`} />
           {sites.length < k && !edited && <p className="lg-hint lg-fewer">{k - sites.length} more would reach no one new, so {sites.length === 1 ? "only 1 is" : `${sites.length} are`} placed.</p>}
           <div className="lg-row">
-            <span>Reach for every site</span>
+            <span>Farthest anyone travels</span>
             <b className="lg-r">{Rnow} mi</b>
           </div>
           <Slider value={rToT(Rnow)} min={rToT(0.5)} max={rToT(30)} step={0.5} onChange={(t) => setRadius(niceR(tToR(t)))} ticks={R_TICKS} label="Reach in miles" valueText={`${Rnow} miles`} />
@@ -93,12 +86,12 @@ export default function Simulator({ S, selected, setSelected }) {
         </fieldset>
 
         <fieldset className="lg-group lg-methods">
-          <legend>Who picks the sites <span>{pending ? "solving…" : ""}</span></legend>
+          <legend>How sites are picked <span>{pending ? "working…" : ""}</span></legend>
           <ol>
             {methodRows.map((r) => (
               <li key={r.key}>
                 <button type="button" className={r.key === method ? "on" : ""} onClick={() => setMethod(r.key)} title={r.about} aria-pressed={r.key === method}>
-                  <span className="m-name">{r.name}{r.exact ? <em> proven best</em> : null}</span>
+                  <span className="m-name">{r.name}</span>
                   <span className="m-bar"><i style={{ width: `${r.cov ?? 0}%` }} className={r.cov != null && r.cov >= top - 0.05 ? "top" : ""} /></span>
                   <span className="m-cov">{r.cov != null ? `${fmt1(r.cov)}%` : "…"}</span>
                 </button>
@@ -117,8 +110,8 @@ export default function Simulator({ S, selected, setSelected }) {
           {sel ? (
             <>
               <p className="lg-sel-n">{sel.name}<span>{sel.custom ? "Placed by hand" : KIND[sel.type] ?? sel.type}{sel.moved ? " · moved" : ""}</span></p>
-              <p className="lg-sel-m">{fmt(ev?.per[selN - 1]?.within ?? 0)} people within {sel.r} mi · {fmt(ev?.per[selN - 1]?.gain ?? 0)} reached by no earlier site</p>
-              <div className="lg-row"><span>This site's reach</span><b className="lg-r">{sel.r} mi</b></div>
+              <p className="lg-sel-m">{fmt(ev?.per[selN - 1]?.within ?? 0)} people within {sel.r} mi · {fmt(ev?.per[selN - 1]?.gain ?? 0)} of them not served by another site</p>
+              <div className="lg-row"><span>How far this site serves</span><b className="lg-r">{sel.r} mi</b></div>
               <Slider value={rToT(sel.r)} min={rToT(0.5)} max={rToT(30)} step={0.5} onChange={(t) => edit.radius(sel.key, niceR(tToR(t)))} ticks={R_TICKS} label={`Reach of site ${selN}`} valueText={`${sel.r} miles`} />
               <div className="lg-btns">
                 {(sel.moved || sel.r !== R) && !sel.custom && <button type="button" className="mini" onClick={() => edit.unmove(sel.key)}>Undo changes</button>}
@@ -128,7 +121,7 @@ export default function Simulator({ S, selected, setSelected }) {
             </>
           ) : (
             <>
-              <p className="lg-hint">Drag a site to move it. Click one to change its reach or remove it.</p>
+              <p className="lg-hint">Drag a site to move it. Click one to change how far it serves, or to remove it.</p>
               <div className="lg-btns">
                 <button type="button" className={`mini${adding ? " on" : ""}`} onClick={() => setAdding((a) => !a)}>{adding ? "Cancel adding" : "Add a site"}</button>
                 {edited > 0 && <button type="button" className="mini" onClick={edit.reset}>Undo my {edited} edit{edited === 1 ? "" : "s"}</button>}

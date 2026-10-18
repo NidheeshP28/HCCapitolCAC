@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlanner } from "../../state/PlannerContext.jsx";
 import { MODES } from "../../lib/usePlan.js";
-import { solve, solveLatest, solveSide } from "../../lib/solver.js";
+import { solve, solveSide } from "../../lib/solver.js";
 import { hav } from "../../lib/plan.js";
 import { siteName } from "../../lib/format.js";
 import { evaluate } from "../../lib/scenario.js";
@@ -10,13 +10,12 @@ const EMPTY = { moved: {}, radius: {}, removed: [], added: [] };
 
 // The simulator's state. County, centers, reach, generator type and the three placement modes are the planner's own
 // state (shared with the map page, so a change here shows there). Hand edits (dragged sites, per-site reach, added
-// or removed sites) and the seven extra algorithms live only on this page.
+// or removed sites) live only on this page.
 export function useScenario() {
   const P = usePlanner();
   const { fips, county, plan, R, k, mode, setMode, D } = P;
   const [method, setMethodRaw] = useState(mode);
   const [edits, setEdits] = useState(EMPTY);
-  const [placements, setPlacements] = useState(null);
   const [modeCov, setModeCov] = useState({});
   const [contacts, setContacts] = useState({});
 
@@ -28,15 +27,7 @@ export function useScenario() {
     if (m in MODES) setMode(m);
   }, [setMode]);
 
-  // all seven algorithms' placements for this county, budget and reach (worker, debounced)
   const pkey = county ? `${fips}|${k}|${R}` : null;
-  useEffect(() => {
-    if (!pkey) return;
-    let live = true;
-    const t = setTimeout(() => solveLatest(fips, county, "placements", { k, R, ms: 1200 }).then((rows) => live && setPlacements({ key: pkey, rows })).catch(() => {}), 250);
-    return () => { live = false; clearTimeout(t); };
-  }, [pkey]); // eslint-disable-line react-hooks/exhaustive-deps
-  const rows = placements?.key === pkey ? placements.rows : null;
 
   // coverage of the robust and optimal plans even when another method is showing, so they can be compared
   useEffect(() => {
@@ -65,14 +56,8 @@ export function useScenario() {
     return () => { live = false; };
   }, [fips]);
 
-  const isMode = method in MODES;
-  const row = !isMode && rows ? rows.find((r) => r.key === method) : null;
-  const base = useMemo(() => {
-    if (!county) return [];
-    if (row) return row.sel.map((idx) => ({ ...county.sites[idx], idx }));
-    return plan?.chosen ?? [];
-  }, [county, row, plan]);
-  const pending = isMode ? !!plan?.pending : !row;
+  const base = useMemo(() => (county ? plan?.chosen ?? [] : []), [county, plan]);
+  const pending = !!plan?.pending;
 
   const sites = useMemo(() => {
     const out = base
@@ -120,5 +105,5 @@ export function useScenario() {
   }), []);
   const edited = edits.added.length + edits.removed.length + Object.keys(edits.moved).length + Object.keys(edits.radius).length;
 
-  return { ...P, method, setMethod, rows, modeCov, base, sites, ev, shift, edit, edited, pending, contacts };
+  return { ...P, method, setMethod, modeCov, base, sites, ev, shift, edit, edited, pending, contacts };
 }

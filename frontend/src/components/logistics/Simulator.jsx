@@ -20,6 +20,8 @@ export default function Simulator({ S, selected, setSelected }) {
   const [adding, setAdding] = useState(false);
   const [budget, setBudget] = useState(null);
   useEffect(() => { setBudget(null); }, [county]);
+  // R is the reach the plan was computed at (it trails a slider drag by a frame); the slider follows the live value
+  const Rnow = radius ?? est?.reach ?? county?.R ?? R;
   const cap = budget ?? est?.budget ?? 0;
   const buys = Math.max(1, Math.floor(cap / GEN[gen].cost + 1e-9));
   const maxK = Math.max(3, Math.min(county?.sites.length ?? 3, 150));
@@ -82,9 +84,9 @@ export default function Simulator({ S, selected, setSelected }) {
           {sites.length < k && !edited && <p className="lg-hint lg-fewer">{k - sites.length} more would reach no one new, so {sites.length === 1 ? "only 1 is" : `${sites.length} are`} placed.</p>}
           <div className="lg-row">
             <span>Reach for every site</span>
-            <b className="lg-r">{R} mi</b>
+            <b className="lg-r">{Rnow} mi</b>
           </div>
-          <Slider value={rToT(R)} min={rToT(0.5)} max={rToT(30)} step={0.5} onChange={(t) => setRadius(niceR(tToR(t)))} ticks={R_TICKS} label="Reach in miles" valueText={`${R} miles`} />
+          <Slider value={rToT(Rnow)} min={rToT(0.5)} max={rToT(30)} step={0.5} onChange={(t) => setRadius(niceR(tToR(t)))} ticks={R_TICKS} label="Reach in miles" valueText={`${Rnow} miles`} />
           {(radius != null || (est && county && k !== sitesFor(est, gen, county))) && (
             <button type="button" className="lg-link" onClick={() => { setK(null); setRadius(null); setBudget(null); }}>Back to the county's numbers</button>
           )}

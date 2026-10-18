@@ -208,5 +208,6 @@
 .stage[data-motion="flow"] .c-zip, .stage[data-motion="flow"] .c-legend { min-height: 130px; }
 @media (max-width: 560px) {
   .cov { grid-template-columns: 1fr; gap: 8px; }
+  .bud { grid-template-columns: 1fr; gap: 8px; }
   .map-tag span { display: none; }
 }

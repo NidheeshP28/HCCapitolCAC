@@ -67,7 +67,14 @@ export function usePlan({ data, fips, k: kNow, radius: rNow, mode }) {
     }
     if (keep.includes(false) && keep.includes(true)) {
       const sel = v.sel.filter((_, i) => keep[i]);
-      v = { sel, gains: v.gains?.filter((_, i) => keep[i]), ...ev(sel) };
+      // a dropped center may have come first and claimed people the kept ones also reach: recount each one's gain
+      const got = new Uint8Array(Z);
+      const gains = sel.map((s) => {
+        let g = 0;
+        for (let z = 0; z < Z; z++) if (!got[z] && D[s * Z + z] <= R) { got[z] = 1; g += zips[z].w; }
+        return g;
+      });
+      v = { sel, gains, ...ev(sel) };
     }
     let run = 0;
     const chosen = v.sel.map((si, i) => {

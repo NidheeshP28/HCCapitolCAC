@@ -19,7 +19,7 @@ export default function Chat({ S }) {
   useEffect(() => { end.current?.scrollIntoView({ block: "end" }); }, [msgs, busy]);
 
   const context = () => ({
-    today: new Date().toISOString().slice(0, 10),
+    today: new Date().toLocaleDateString("en-CA"),       // the user's own date, YYYY-MM-DD (toISOString is UTC)
     county: S.county?.name, fips: S.fips,
     plan: S.ev && {
       sites: S.sites.length, reach_miles: S.R, generator: S.gen, people_reached: Math.round(S.ev.reached),

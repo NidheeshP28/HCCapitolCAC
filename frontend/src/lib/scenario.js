@@ -17,7 +17,7 @@ export const SERVICES = [
 export function evaluate(county, sites) {
   const { zips } = county, Z = zips.length, S = sites.length;
   const total = county.total || 1;
-  const reachBy = new Int8Array(Z).fill(0), first = new Int16Array(Z).fill(-1), serve = new Int16Array(Z).fill(-1);
+  const reachBy = new Uint16Array(Z), first = new Int16Array(Z).fill(-1), serve = new Int16Array(Z).fill(-1);
   const near = new Int16Array(Z).fill(-1), nearD = new Float64Array(Z).fill(Infinity);
   const per = sites.map(() => ({ within: 0, gain: 0, served: 0, overlap: 0, zips: 0 }));
   for (let z = 0; z < Z; z++) {

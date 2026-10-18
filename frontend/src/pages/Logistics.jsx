@@ -11,7 +11,7 @@ import Logo from "../components/ui/Logo.jsx";
 import Apa from "../components/ui/Apa.jsx";
 import Boundary from "../components/ui/Boundary.jsx";
 import { goTo } from "../lib/route.js";
-import { estimate, GEN } from "../lib/budget.js";
+import { estimate, GEN, sitesFor } from "../lib/budget.js";
 import { costs } from "../lib/scenario.js";
 import { fmt } from "../lib/format.js";
 import { REFS } from "../data/references.js";
@@ -21,7 +21,7 @@ import "../styles/logistics.css";
 const STATE = { AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado", CT: "Connecticut", DE: "Delaware", DC: "District of Columbia", FL: "Florida", GA: "Georgia", HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", PR: "Puerto Rico" };
 const longName = (name) => { const [c, st] = name.split(", "); return st ? `${c}, ${STATE[st] ?? st}` : name; };
 
-const PAGE_REFS = ["empower", "zcta", "osm", "ncdps", "fema", "njoem", "vandalia", "herc", "eiaDiesel", "eiaGas", "stow", "santafe", "generac", "oregon", "inogen", "church", "nemhauser", "khuller", "leskovec", "lowerre", "kirkpatrick", "holland", "landdoig", "highs", "molinari", "dshs", "dominianni", "stone", "casey"];
+const PAGE_REFS = ["empower", "zcta", "osm", "ncdps", "fema", "njoem", "vandalia", "herc", "eiaDiesel", "eiaGas", "stow", "santafe", "generac", "oregon", "inogen", "church", "nemhauser", "khuller", "leskovec", "lowerre", "kirkpatrick", "holland", "landdoig", "highs"];
 
 // What the other county looks like at its own workbook budget, for the side-by-side row.
 function compareRow(data, id, gen) {
@@ -106,7 +106,7 @@ export default function Logistics() {
 
       <section className="lg-band" aria-label="Overview">
         <dl>
-          <div><dt>Sites</dt><dd>{sites.length}</dd><p>{sites.length < S.k && !S.edited ? `budget buys ${S.k}; ${sites.length} already reach everyone in range` : `${GEN_LABEL[gen].toLowerCase()}, ${S.R} mi reach`}{T ? ` · workbook: ${T.sites.recommended} to ${T.sites.high}` : ""}</p></div>
+          <div><dt>Sites</dt><dd>{sites.length}</dd><p>{sites.length < S.k && !S.edited && est && S.k === sitesFor(est, gen, county) ? `budget buys ${S.k}; ${sites.length} already reach everyone in range` : `${GEN_LABEL[gen].toLowerCase()}, ${S.R} mi reach`}{T ? ` · workbook: ${T.sites.recommended} to ${T.sites.high}` : ""}</p></div>
           <div><dt>Within reach</dt><dd>{fmt(ev.reached)}</dd><p>{ev.pct.toFixed(1)}% of people who rely on power</p></div>
           <div><dt>Not reached</dt><dd className={ev.missed >= 0.5 ? "miss" : ""}>{fmt(ev.missed)}</dd><p>{ev.unreached.length} ZIP{ev.unreached.length === 1 ? "" : "s"} outside every circle</p></div>
           <div><dt>Full setup</dt><dd>{money(c.setup)}</dd><p>{money(GEN[gen].cost)} a site · {money(c.setup / Math.max(1, ev.reached))} per person reached</p></div>

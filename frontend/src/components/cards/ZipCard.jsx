@@ -29,7 +29,7 @@ export default function ZipCard() {
   } else if (zip && home !== fips) {
     body = (
       <p className="res">
-        {zip} is in <b>{data.counties[home].name}</b>. <button type="button" className="mini" onClick={() => setFips(home)}>Open</button>
+        {zip} is in <b>{data.counties[home].name}</b>. <button type="button" className="mini" onClick={() => { setFips(home); setPinZip(zip); }}>Open</button>
       </p>
     );
   } else if (i != null && plan) {

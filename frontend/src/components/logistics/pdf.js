@@ -186,14 +186,14 @@ export async function briefingPdf(S) {
     y = text(doc, "Not reached yet", M, y, { size: 11, bold: true });
     ev.unreached.slice(0, 6).forEach((i) => {
       const z = county.zips[i];
-      text(doc, `ZIP ${z.z}${areaOf(z.z) ? ` (${areaOf(z.z)})` : ""}: ${z.masked ? "1-10" : fmt(z.w)} people, ${ev.nearD[i].toFixed(1)} mi from site ${ev.near[i] + 1}`, M, y + 10, { size: 8.5, color: INK2 });
+      text(doc, `ZIP ${z.z}${areaOf(z.z) ? ` (${areaOf(z.z)})` : ""}: ${z.masked ? "1-10" : fmt(z.w)} people, ${ev.near[i] >= 0 ? `${ev.nearD[i].toFixed(1)} mi from site ${ev.near[i] + 1}` : "no site"}`, M, y + 10, { size: 8.5, color: INK2 });
       y += 13;
     });
     y += 10;
   }
   if (y > H - 220) { footer(doc, doc.getNumberOfPages(), label); doc.addPage(); y = M + 10; }
   y = text(doc, "Timeline", M, y + 4, { size: 11, bold: true });
-  timeline(S.est?.type ?? "Rural", sites.length, sites[0]?.name).forEach(([when, what]) => {
+  timeline(S.est?.type ?? (sites.length > 10 ? "Urban" : "Rural"), sites.length, sites[0]?.name).forEach(([when, what]) => {
     text(doc, when, M, y + 10, { size: 8.5, bold: true });
     y = text(doc, what, M + 90, y + 10, { size: 8.5, color: INK2, width: W - 2 * M - 90 }) + 2;
   });

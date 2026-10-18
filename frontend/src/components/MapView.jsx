@@ -158,6 +158,7 @@ export default function MapView() {
       s.zipLayer.addLayer(base);
       return { base, gap: null, point: true };
     });
+    s.itemsFor = county;
     s.bounds = L.latLngBounds(boundsOf(shapes, county.zips));
     if (s.map.getContainer().clientWidth > 40) {
       const first = s.fitted == null;
@@ -255,7 +256,7 @@ export default function MapView() {
     const i = zipIndex.get(activeZip);
     if (i == null) return;
     const z = county.zips[i];
-    const it = s.items[i];
+    const it = s.itemsFor === county ? s.items[i] : null;    // the polygons may still be the last county's
     if (it && !it.point) {
       const ll = it.base.getLatLngs();
       s.focusLayer.addLayer(L.polygon(ll, { pane: "focus", interactive: false, fill: false, color: INK, weight: 2.5 }));
